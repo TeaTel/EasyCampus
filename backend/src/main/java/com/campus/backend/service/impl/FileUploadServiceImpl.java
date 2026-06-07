@@ -344,9 +344,12 @@ public class FileUploadServiceImpl implements FileUploadService {
             int width = original.getWidth();
             int height = original.getHeight();
 
+            // 临时文件名使用 .tmp.{ext} 格式，避免 Thumbnailator 因后缀不匹配而自动追加扩展名
+            // 例如: uuid.jpg → uuid.jpg.tmp.jpg（.jpg 是已知格式，不会被重复追加）
+            Path compressed = filePath.resolveSibling(filePath.getFileName() + ".tmp." + ext);
+
             // 仅在图片超过最大尺寸时压缩
             if (width > props.getMaxWidth() || height > props.getMaxHeight()) {
-                Path compressed = filePath.resolveSibling(filePath.getFileName() + ".tmp");
                 Thumbnails.of(filePath.toFile())
                     .size(props.getMaxWidth(), props.getMaxHeight())
                     .keepAspectRatio(true)
@@ -359,7 +362,6 @@ public class FileUploadServiceImpl implements FileUploadService {
                 log.info("图片已压缩: {} ({}x{} -> 按比例缩放)", filePath, width, height);
             } else {
                 // 即使尺寸合适，也进行质量压缩
-                Path compressed = filePath.resolveSibling(filePath.getFileName() + ".tmp");
                 Thumbnails.of(filePath.toFile())
                     .scale(1.0)
                     .outputQuality(props.getCompressionQuality())

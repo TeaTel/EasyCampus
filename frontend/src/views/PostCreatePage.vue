@@ -133,7 +133,7 @@ async function submitPost() {
       contact: postType.value === 'ACTIVITY' ? contact.value.trim() : null
     })
     if (res.code === 200) {
-      router.push(`/community/posts/${res.data.id}`)
+      router.replace(`/community/posts/${res.data.id}`)
     } else {
       error.value = res.message || '发布失败'
     }
