@@ -48,6 +48,22 @@ spring:
       allowed-headers: "*"
       allow-credentials: true
 
+  # 邮件服务配置（163邮箱 SMTP）
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: ${MAIL_USERNAME:teatel0125@163.com}
+    password: ${MAIL_PASSWORD:SMcv3AX6WVbcUnBh}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
+
   # Redis配置 - 禁用Redis，使用内存缓存
   data:
     redis:
