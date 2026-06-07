@@ -1,0 +1,374 @@
+<template>
+  <div class="image-uploader">
+    <div class="image-grid">
+      <div
+        v-for="(img, idx) in imageList"
+        :key="img.id"
+        class="image-item"
+        :class="{ 'has-error': img.status === 'error' }"
+      >
+        <img :src="img.preview || img.url" class="preview-img" alt="" />
+
+        <!-- 上传中遮罩 -->
+        <div v-if="img.status === 'uploading'" class="uploading-mask">
+          <div class="progress-ring">
+            <svg viewBox="0 0 36 36">
+              <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="progress-bar" :stroke-dasharray="`${img.progress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="progress-text">{{ img.progress }}%</span>
+          </div>
+        </div>
+
+        <!-- 上传失败遮罩 -->
+        <div v-if="img.status === 'error'" class="error-mask">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <span class="error-text">{{ img.errorMsg || '上传失败' }}</span>
+          <button class="retry-btn" @click="retryUpload(idx)">重试</button>
+        </div>
+
+        <!-- 上传成功标识 -->
+        <div v-if="img.status === 'success'" class="success-badge">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+
+        <!-- 删除按钮 -->
+        <button class="remove-btn" @click="removeImage(idx)">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- 上传触发器 -->
+      <label v-if="imageList.length < maxCount" class="upload-trigger" :class="{ disabled: uploading }">
+        <input
+          type="file"
+          :accept="accept"
+          multiple
+          @change="handleFileSelect"
+          hidden
+          :disabled="uploading"
+        />
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#bbb" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21,15 16,10 5,21"/>
+        </svg>
+        <span class="upload-count">{{ imageList.length }}/{{ maxCount }}</span>
+      </label>
+    </div>
+    <p class="upload-tip">支持 JPG/PNG/WEBP，单张不超过{{ maxSize }}MB，最多{{ maxCount }}张</p>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { uploadApi } from '../services/api'
+
+const CHUNK_THRESHOLD = 5 * 1024 * 1024 // 超过5MB启用分片上传
+const CHUNK_SIZE = 2 * 1024 * 1024 // 每个分片2MB
+
+const props = defineProps({
+  modelValue: { type: Array, default: () => [] },
+  maxCount: { type: Number, default: 9 },
+  maxSize: { type: Number, default: 10 },
+  accept: { type: String, default: 'image/jpeg,image/png,image/webp' },
+  autoUpload: { type: Boolean, default: true },
+  placeholder: { type: String, default: '' }
+})
+
+const emit = defineEmits(['update:modelValue', 'upload-success', 'upload-error', 'all-uploaded'])
+
+const imageList = ref([])
+let idCounter = 0
+
+const uploading = computed(() => imageList.value.some(img => img.status === 'uploading'))
+
+// 监听外部 modelValue 变化（初始化时）
+watch(() => props.modelValue, (urls) => {
+  if (urls && urls.length > 0 && imageList.value.length === 0) {
+    imageList.value = urls.map(url => ({
+      id: ++idCounter,
+      file: null,
+      url: url,
+      preview: url,
+      status: 'success',
+      progress: 100,
+      errorMsg: ''
+    }))
+  }
+}, { immediate: true })
+
+// 图片URL变化时通知父组件
+function emitUrls() {
+  const urls = imageList.value
+    .filter(img => img.status === 'success' && img.url)
+    .map(img => img.url)
+  emit('update:modelValue', urls)
+}
+
+// 文件选择处理
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files)
+  const allowedTypes = props.accept.split(',')
+  const maxSizeBytes = props.maxSize * 1024 * 1024
+
+  for (const file of files) {
+    if (imageList.value.length >= props.maxCount) break
+
+    // 格式验证
+    if (!allowedTypes.includes(file.type)) {
+      const img = createImageItem(file)
+      img.status = 'error'
+      img.errorMsg = '不支持的格式'
+      imageList.value.push(img)
+      emit('upload-error', { error: '不支持的格式', index: imageList.value.length - 1 })
+      continue
+    }
+
+    // 大小验证
+    if (file.size > maxSizeBytes) {
+      const img = createImageItem(file)
+      img.status = 'error'
+      img.errorMsg = `超过${props.maxSize}MB`
+      imageList.value.push(img)
+      emit('upload-error', { error: `文件超过${props.maxSize}MB限制`, index: imageList.value.length - 1 })
+      continue
+    }
+
+    const img = createImageItem(file)
+    // 生成本地预览
+    img.preview = URL.createObjectURL(file)
+    imageList.value.push(img)
+
+    if (props.autoUpload) {
+      uploadSingleImage(img, imageList.value.length - 1)
+    }
+  }
+
+  e.target.value = ''
+}
+
+function createImageItem(file) {
+  return {
+    id: ++idCounter,
+    file: file,
+    url: '',
+    preview: '',
+    status: 'pending',
+    progress: 0,
+    errorMsg: ''
+  }
+}
+
+// 上传单张图片
+async function uploadSingleImage(img, idx) {
+  if (!img.file) return
+
+  img.status = 'uploading'
+  img.progress = 0
+  img.errorMsg = ''
+
+  try {
+    let url
+    // 大文件使用分片上传
+    if (img.file.size > CHUNK_THRESHOLD) {
+      url = await uploadWithChunks(img.file, (progress) => {
+        img.progress = progress
+      })
+    } else {
+      // 普通上传
+      const res = await uploadApi.uploadImage(img.file, (evt) => {
+        if (evt.total) {
+          img.progress = Math.round((evt.loaded / evt.total) * 100)
+        }
+      })
+      if (res.code === 200 && res.data && res.data.url) {
+        url = res.data.url
+      } else {
+        throw new Error(res.message || '上传失败')
+      }
+    }
+
+    img.url = url
+    img.status = 'success'
+    img.progress = 100
+    emit('upload-success', { url, index: idx })
+    emitUrls()
+  } catch (err) {
+    img.status = 'error'
+    img.errorMsg = getErrorMessage(err)
+    emit('upload-error', { error: img.errorMsg, index: idx })
+  }
+
+  checkAllUploaded()
+}
+
+// 分片上传
+async function uploadWithChunks(file, onProgress) {
+  const fileId = generateFileId()
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE
+    const end = Math.min(start + CHUNK_SIZE, file.size)
+    const chunk = file.slice(start, end)
+
+    try {
+      await uploadApi.uploadChunk(chunk, fileId, i, totalChunks, file.name)
+    } catch (err) {
+      throw new Error(`分片${i + 1}上传失败: ${getErrorMessage(err)}`)
+    }
+
+    // 更新进度
+    const progress = Math.round(((i + 1) / totalChunks) * 100)
+    onProgress(progress)
+  }
+
+  // 合并分片
+  const mergeRes = await uploadApi.mergeChunks(fileId, file.name, totalChunks)
+  if (mergeRes.code === 200 && mergeRes.data && mergeRes.data.url) {
+    return mergeRes.data.url
+  }
+  throw new Error(mergeRes.message || '合并分片失败')
+}
+
+// 重试上传
+function retryUpload(idx) {
+  const img = imageList.value[idx]
+  if (img && img.file) {
+    uploadSingleImage(img, idx)
+  }
+}
+
+// 删除图片
+function removeImage(idx) {
+  const img = imageList.value[idx]
+  if (img.preview && img.preview.startsWith('blob:')) {
+    URL.revokeObjectURL(img.preview)
+  }
+  imageList.value.splice(idx, 1)
+  emitUrls()
+}
+
+// 检查是否全部上传完成
+function checkAllUploaded() {
+  const allDone = imageList.value.every(img => img.status === 'success' || img.status === 'error')
+  if (allDone && imageList.value.length > 0) {
+    emit('all-uploaded')
+  }
+}
+
+// 生成文件唯一ID
+function generateFileId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
+}
+
+// 友好的错误消息
+function getErrorMessage(err) {
+  if (!err) return '上传失败'
+  if (typeof err === 'string') return err
+  if (err.message) {
+    if (err.message.includes('timeout') || err.code === 'TIMEOUT') return '上传超时，请重试'
+    if (err.message.includes('Network') || err.code === 'NETWORK_ERROR') return '网络异常，请检查连接'
+    if (err.message.includes('超过') || err.message.includes('大小')) return err.message
+    if (err.message.includes('格式') || err.message.includes('不支持')) return err.message
+    return err.message
+  }
+  return '上传失败，请重试'
+}
+
+// 暴露方法给父组件
+defineExpose({
+  // 手动触发上传
+  async startUpload() {
+    for (let i = 0; i < imageList.value.length; i++) {
+      const img = imageList.value[i]
+      if (img.status === 'pending' && img.file) {
+        await uploadSingleImage(img, i)
+      }
+    }
+  },
+  // 获取已上传的URL列表
+  getUploadedUrls() {
+    return imageList.value
+      .filter(img => img.status === 'success' && img.url)
+      .map(img => img.url)
+  },
+  // 是否正在上传
+  isUploading() {
+    return uploading.value
+  },
+  // 是否有上传失败的
+  hasErrors() {
+    return imageList.value.some(img => img.status === 'error')
+  }
+})
+</script>
+
+<style scoped>
+.image-uploader { width: 100%; }
+.image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.image-item {
+  position: relative; aspect-ratio: 1; border-radius: 8px;
+  overflow: hidden; background: #f5f5f5;
+}
+.image-item.has-error { border: 2px solid #ff4d4f; }
+.preview-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 上传中遮罩 */
+.uploading-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.progress-ring { position: relative; width: 48px; height: 48px; }
+.progress-ring svg { width: 48px; height: 48px; transform: rotate(-90deg); }
+.progress-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 3; }
+.progress-bar { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 0.3s; }
+.progress-text {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; color: #fff; font-size: 11px; font-weight: 700;
+}
+
+/* 上传失败遮罩 */
+.error-mask {
+  position: absolute; inset: 0; background: rgba(255,77,79,0.75);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; padding: 8px;
+}
+.error-text { color: #fff; font-size: 10px; text-align: center; line-height: 1.3; }
+.retry-btn {
+  padding: 3px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; cursor: pointer;
+}
+.retry-btn:active { background: rgba(255,255,255,0.4); }
+
+/* 上传成功标识 */
+.success-badge {
+  position: absolute; bottom: 4px; right: 4px; width: 20px; height: 20px;
+  background: #52c41a; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+}
+
+/* 删除按钮 */
+.remove-btn {
+  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+  background: rgba(0,0,0,0.5); border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; cursor: pointer; border: none;
+  z-index: 2;
+}
+.remove-btn:active { background: rgba(255,77,79,0.8); }
+
+/* 上传触发器 */
+.upload-trigger {
+  aspect-ratio: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  background: #fafafa; border: 2px dashed #ddd; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-trigger:active { background: #FFF7E6; border-color: #FFD591; }
+.upload-trigger.disabled { opacity: 0.5; cursor: not-allowed; }
+.upload-count { font-size: 12px; color: #bbb; }
+.upload-tip { margin-top: 8px; font-size: 12px; color: #999; }
+</style>

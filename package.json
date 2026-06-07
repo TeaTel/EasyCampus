@@ -1,0 +1,42 @@
+{
+  "name": "campus-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "校园二手交易平台 - 全栈项目",
+  "workspaces": [
+    "env-setup/frontend",
+    "env-setup/backend"
+  ],
+  "scripts": {
+    "frontend:dev": "cd env-setup/frontend && npm run dev",
+    "frontend:build": "cd env-setup/frontend && npm run build",
+    "frontend:preview": "cd env-setup/frontend && npm run preview",
+    "backend:dev": "cd env-setup/backend && ./mvnw spring-boot:run",
+    "backend:build": "cd env-setup/backend && ./mvnw clean package",
+    "deploy:frontend": "cd env-setup/frontend && npm install && npm run build",
+    "deploy:backend": "cd env-setup/backend && ./mvnw clean package -DskipTests"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "campus",
+    "marketplace",
+    "vue",
+    "spring-boot",
+    "fullstack"
+  ],
+  "dependencies": {
+    "jsdom": "^27.0.1",
+    "mermaid": "^11.14.0",
+    "playwright": "^1.59.1"
+  },
+  "author": "TeaTel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TeaTel/-.git"
+  }
+}
