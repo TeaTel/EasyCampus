@@ -20,7 +20,7 @@ COPY frontend/index.html ./
 COPY frontend/public ./public/
 COPY frontend/src ./src/
 COPY frontend/scripts ./scripts/
-COPY frontend/.env.production ./
+RUN printf 'VITE_API_BASE_URL=\nVITE_APP_TITLE=校园二手交易平台\nVITE_APP_VERSION=1.0.0\nVITE_APP_DESCRIPTION=大学生课程期末作业项目 - 生产环境\n' > .env.production
 
 RUN npm run build
 
