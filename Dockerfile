@@ -74,6 +74,10 @@ COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
 
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# 预创建 uploads 目录并设置权限（解决 Docker 命名卷首次挂载时 root 属主问题）
+RUN mkdir -p /app/uploads /app/uploads/temp && chown -R spring:spring /app/uploads
+
 USER spring:spring
 
 EXPOSE 8080

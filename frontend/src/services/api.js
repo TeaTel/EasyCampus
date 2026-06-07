@@ -31,6 +31,27 @@ const api = axios.create({
   }
 })
 
+/**
+ * 解析图片URL为完整可访问地址
+ * - 如果图片URL已是完整HTTP(S)地址，直接返回
+ * - 如果设置了 VITE_IMAGE_BASE_URL 环境变量，拼接前缀（用于CDN/OSS等场景）
+ * - 否则直接返回相对路径（默认情况下 /uploads/xxx.png 通过 nginx/vite-proxy 可访问）
+ * @param {string|null|undefined} url - 图片URL（如 "/uploads/2026/06/07/uuid.png"）
+ * @returns {string} 完整的图片访问地址
+ */
+export function resolveImageUrl(url) {
+  if (!url) return ''
+  // 已经是完整URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // 通过环境变量配置图片资源基础URL（CDN/OSS场景）
+  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL
+  if (imageBaseUrl && imageBaseUrl.trim() !== '') {
+    const base = imageBaseUrl.trim().replace(/\/+$/, '')
+    return base + url
+  }
+  return url
+}
+
 // 请求拦截器 - 添加JWT令牌
 api.interceptors.request.use(
   config => {

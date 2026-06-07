@@ -26,6 +26,11 @@ if [ ! -f "/app/backend.jar" ]; then
     exit 1
 fi
 
+# 确保上传目录存在（兼容卷挂载后权限问题）
+UPLOAD_DIR="${APP_UPLOAD_BASE_PATH:-/app/uploads}"
+mkdir -p "$UPLOAD_DIR" "$UPLOAD_DIR/temp" 2>/dev/null || true
+echo "Upload directory: $UPLOAD_DIR"
+
 echo "JAR file found. Starting application..."
 java -version
 echo "Starting Spring Boot application..."

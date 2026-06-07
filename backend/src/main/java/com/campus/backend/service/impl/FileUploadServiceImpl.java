@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -67,8 +68,12 @@ public class FileUploadServiceImpl implements FileUploadService {
         Path tempDir = resolveTempPath().resolve(fileId);
         try {
             Files.createDirectories(tempDir);
+        } catch (AccessDeniedException e) {
+            log.error("分片上传临时目录无写权限, tempDir={}, userId={}", tempDir, userId, e);
+            throw new RuntimeException("分片上传失败: 服务器临时目录无写入权限，请联系管理员", e);
         } catch (IOException e) {
-            throw new RuntimeException("创建临时目录失败", e);
+            log.error("创建分片临时目录失败, tempDir={}, userId={}", tempDir, userId, e);
+            throw new RuntimeException("分片上传失败: 无法创建临时目录(" + e.getMessage() + ")", e);
         }
 
         // 保存分片
@@ -137,8 +142,12 @@ public class FileUploadServiceImpl implements FileUploadService {
             String url = "/uploads/" + datePath + "/" + newFileName;
             log.info("用户{}合并分片上传成功: {}", userId, url);
             return url;
+        } catch (AccessDeniedException e) {
+            log.error("合并分片时目标目录无写权限, targetDir={}, userId={}", targetDir, userId, e);
+            throw new RuntimeException("合并分片失败: 服务器上传目录无写入权限，请联系管理员", e);
         } catch (IOException e) {
-            throw new RuntimeException("合并分片失败", e);
+            log.error("合并分片失败, targetDir={}, userId={}", targetDir, userId, e);
+            throw new RuntimeException("合并分片失败: " + e.getMessage(), e);
         }
     }
 
@@ -254,37 +263,59 @@ public class FileUploadServiceImpl implements FileUploadService {
     }
 
     private String storeFile(MultipartFile file, Long userId) {
+        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String ext = getExtension(file.getOriginalFilename());
+        String newFileName = UUID.randomUUID().toString() + "." + ext;
+
+        Path targetDir;
         try {
-            String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            String ext = getExtension(file.getOriginalFilename());
-            String newFileName = UUID.randomUUID().toString() + "." + ext;
-
-            Path targetDir = resolveBasePath().resolve(datePath);
+            targetDir = resolveBasePath().resolve(datePath);
             Files.createDirectories(targetDir);
-
-            Path targetFile = targetDir.resolve(newFileName);
-            Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-
-            // 压缩图片
-            compressImage(targetFile, ext);
-
-            return "/uploads/" + datePath + "/" + newFileName;
+        } catch (AccessDeniedException e) {
+            log.error("上传目录无写权限, basePath={}, userId={}", props.getBasePath(), userId, e);
+            throw new RuntimeException("文件存储失败: 服务器上传目录无写入权限，请联系管理员", e);
         } catch (IOException e) {
-            throw new RuntimeException("文件存储失败", e);
+            log.error("创建上传目录失败, basePath={}, userId={}", props.getBasePath(), userId, e);
+            throw new RuntimeException("文件存储失败: 无法创建上传目录(" + e.getMessage() + ")", e);
         }
+
+        Path targetFile = targetDir.resolve(newFileName);
+        try {
+            Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("写入文件失败, targetFile={}, userId={}", targetFile, userId, e);
+            // 清理可能已创建的空文件
+            try { Files.deleteIfExists(targetFile); } catch (IOException ignored) {}
+            throw new RuntimeException("文件存储失败: 写入文件时发生错误(" + e.getMessage() + ")", e);
+        }
+
+        // 压缩图片（压缩失败不影响上传结果，仅记录日志）
+        compressImage(targetFile, ext);
+
+        log.info("用户{}上传图片成功: {} (size={}B)", userId, targetFile, file.getSize());
+        return "/uploads/" + datePath + "/" + newFileName;
     }
 
     private String storeAndCompressAvatar(MultipartFile file, Long userId) {
+        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String ext = getExtension(file.getOriginalFilename());
+        String newFileName = UUID.randomUUID().toString() + "." + ext;
+
+        Path targetDir;
         try {
-            String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            String ext = getExtension(file.getOriginalFilename());
-            String newFileName = UUID.randomUUID().toString() + "." + ext;
-
-            Path targetDir = resolveBasePath().resolve(datePath);
+            targetDir = resolveBasePath().resolve(datePath);
             Files.createDirectories(targetDir);
+        } catch (AccessDeniedException e) {
+            log.error("头像上传目录无写权限, basePath={}, userId={}", props.getBasePath(), userId, e);
+            throw new RuntimeException("头像上传失败: 服务器上传目录无写入权限，请联系管理员", e);
+        } catch (IOException e) {
+            log.error("创建头像上传目录失败, basePath={}, userId={}", props.getBasePath(), userId, e);
+            throw new RuntimeException("头像上传失败: 无法创建上传目录(" + e.getMessage() + ")", e);
+        }
 
-            Path targetFile = targetDir.resolve(newFileName);
+        Path targetFile = targetDir.resolve(newFileName);
 
+        try {
             // 头像特殊处理：裁剪为正方形并压缩
             Thumbnails.of(file.getInputStream())
                 .size(300, 300)
@@ -292,11 +323,14 @@ public class FileUploadServiceImpl implements FileUploadService {
                 .outputQuality(props.getCompressionQuality())
                 .outputFormat(ext)
                 .toFile(targetFile.toFile());
-
-            return "/uploads/" + datePath + "/" + newFileName;
         } catch (IOException e) {
-            throw new RuntimeException("头像存储失败", e);
+            log.error("头像处理写入失败, targetFile={}, userId={}", targetFile, userId, e);
+            try { Files.deleteIfExists(targetFile); } catch (IOException ignored) {}
+            throw new RuntimeException("头像上传失败: 处理图片时发生错误(" + e.getMessage() + ")", e);
         }
+
+        log.info("用户{}上传头像成功: {} (size={}B)", userId, targetFile, file.getSize());
+        return "/uploads/" + datePath + "/" + newFileName;
     }
 
     private void compressImage(Path filePath, String ext) {

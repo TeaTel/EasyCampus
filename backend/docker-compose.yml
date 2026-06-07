@@ -40,10 +40,12 @@ services:
       DB_PASSWORD: 123456
       JWT_SECRET: your-production-jwt-secret-key-change-this-in-production
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      APP_UPLOAD_BASE_PATH: /app/uploads
     ports:
       - "8080:8080"
     volumes:
       - ./logs:/app/logs
+      - upload_data:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -64,3 +66,4 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  upload_data:

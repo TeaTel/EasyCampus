@@ -265,15 +265,26 @@ function generateFileId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
 }
 
-// 友好的错误消息
+// 友好的错误消息（将后端返回的技术性错误转为用户可理解的提示）
 function getErrorMessage(err) {
   if (!err) return '上传失败'
   if (typeof err === 'string') return err
+
   if (err.message) {
-    if (err.message.includes('timeout') || err.code === 'TIMEOUT') return '上传超时，请重试'
-    if (err.message.includes('Network') || err.code === 'NETWORK_ERROR') return '网络异常，请检查连接'
+    // 后端返回的具体错误消息（优先透传，这些已经是中文且对用户友好）
+    if (err.message.includes('无写入权限')) return '服务器存储异常，请联系管理员'
+    if (err.message.includes('无写权限')) return '服务器存储异常，请联系管理员'
+    if (err.message.includes('磁盘空间')) return '服务器磁盘空间不足，请联系管理员'
     if (err.message.includes('超过') || err.message.includes('大小')) return err.message
     if (err.message.includes('格式') || err.message.includes('不支持')) return err.message
+    if (err.message.includes('timeout') || err.code === 'TIMEOUT') return '上传超时，请重试'
+    if (err.message.includes('Network') || err.code === 'NETWORK_ERROR') return '网络异常，请检查连接'
+    // 后端返回的用户友好消息直接展示
+    if (err.message.startsWith('上传失败:') || err.message.startsWith('头像上传失败:') ||
+        err.message.startsWith('分片上传失败:') || err.message.startsWith('合并分片失败:') ||
+        err.message.startsWith('文件存储失败:')) {
+      return err.message
+    }
     return err.message
   }
   return '上传失败，请重试'
