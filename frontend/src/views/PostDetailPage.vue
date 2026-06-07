@@ -120,7 +120,7 @@ const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="ht
 
 const postImages = computed(() => {
   if (!post.value) return []
-  if (post.value.images?.length) return post.value.images
+  if (post.value.imageUrls?.length) return post.value.imageUrls
   if (post.value.coverImage) return [post.value.coverImage]
   return []
 })
