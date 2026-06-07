@@ -166,6 +166,7 @@ public class FeedController {
             item.setTags(post.getTags());
             item.setCampusTag(post.getCampusTag());
             item.setUserCampus(post.getUserCampus());
+            item.setCoverImage(post.getCoverImage());
             items.add(item);
         }
 
