@@ -59,10 +59,14 @@ RUN ls -la src/main/resources/static/ && mvn clean package -DskipTests -B --no-t
 # ============================================
 FROM eclipse-temurin:21-jre-alpine
 
+RUN apk add --no-cache curl tzdata
+
 WORKDIR /app
 
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apk add --no-cache curl
 
 COPY --from=backend-build /app/backend/target/backend-0.0.1-SNAPSHOT.jar ./backend.jar
 
