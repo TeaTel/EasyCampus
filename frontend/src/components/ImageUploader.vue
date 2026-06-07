@@ -11,7 +11,16 @@
 
         <!-- 上传中遮罩 -->
         <div v-if="img.status === 'uploading'" class="uploading-mask">
-          <div class="progress-ring">
+          <!-- 不定态加载动画（Cloudflare代理时无法获取进度） -->
+          <div v-if="img.indeterminate" class="indeterminate-ring">
+            <svg viewBox="0 0 36 36">
+              <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="progress-bar-indeterminate" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" />
+            </svg>
+            <span class="progress-text">...</span>
+          </div>
+          <!-- 确定进度条 -->
+          <div v-else class="progress-ring">
             <svg viewBox="0 0 36 36">
               <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               <path class="progress-bar" :stroke-dasharray="`${img.progress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -158,6 +167,7 @@ function createImageItem(file) {
     preview: '',
     status: 'pending',
     progress: 0,
+    indeterminate: false,
     errorMsg: ''
   }
 }
@@ -168,6 +178,7 @@ async function uploadSingleImage(img, idx) {
 
   img.status = 'uploading'
   img.progress = 0
+  img.indeterminate = true  // 默认不定态（Cloudflare代理时total为0）
   img.errorMsg = ''
 
   try {
@@ -176,13 +187,17 @@ async function uploadSingleImage(img, idx) {
     if (img.file.size > CHUNK_THRESHOLD) {
       url = await uploadWithChunks(img.file, (progress) => {
         img.progress = progress
+        img.indeterminate = false
       })
     } else {
       // 普通上传
       const res = await uploadApi.uploadImage(img.file, (evt) => {
-        if (evt.total) {
+        if (evt.total && evt.total > 0) {
+          // total有效时显示真实百分比
           img.progress = Math.round((evt.loaded / evt.total) * 100)
+          img.indeterminate = false
         }
+        // total为0时保持不定态动画（Cloudflare CDN代理导致）
       })
       if (res.code === 200 && res.data && res.data.url) {
         url = res.data.url
@@ -194,11 +209,13 @@ async function uploadSingleImage(img, idx) {
     img.url = url
     img.status = 'success'
     img.progress = 100
+    img.indeterminate = false
     emit('upload-success', { url, index: idx })
     emitUrls()
   } catch (err) {
     img.status = 'error'
     img.errorMsg = getErrorMessage(err)
+    img.indeterminate = false
     emit('upload-error', { error: img.errorMsg, index: idx })
   }
 
@@ -340,6 +357,20 @@ defineExpose({
 .progress-text {
   position: absolute; inset: 0; display: flex; align-items: center;
   justify-content: center; color: #fff; font-size: 11px; font-weight: 700;
+}
+
+/* 不定态加载动画 */
+.indeterminate-ring { position: relative; width: 48px; height: 48px; }
+.indeterminate-ring svg { width: 48px; height: 48px; animation: spin 1.5s linear infinite; }
+.progress-bar-indeterminate {
+  fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round;
+  stroke-dasharray: 25, 75; animation: dash 1.8s ease-in-out infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes dash {
+  0% { stroke-dashoffset: 100; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -100; }
 }
 
 /* 上传失败遮罩 */
