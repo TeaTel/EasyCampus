@@ -635,4 +635,16 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
   font-size: 13px;
   color: #666666;
 }
+
+/* 移动端：隐藏评论输入框，让操作按钮获得全部空间 */
+@media (max-width: 768px) {
+  .bottom-comment-input {
+    display: none;
+  }
+
+  .bottom-actions {
+    flex: 1;
+    justify-content: space-around;
+  }
+}
 </style>
