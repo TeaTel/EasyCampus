@@ -31,8 +31,10 @@ public class ActivityController {
         query.setPage(page);
         query.setSize(size);
         query.setPostType("ACTIVITY");
-        if ("ongoing".equals(status)) {
-            query.setStatus("PUBLISHED");
+        // 前端传的status是活动时间阶段(upcoming/ongoing/past)，映射到activityStatus字段
+        // 不设置query.setStatus，避免与帖子状态(PUBLISHED等)混淆
+        if (status != null && !status.isEmpty()) {
+            query.setActivityStatus(status);
         }
 
         Long userId = SecurityUtils.getCurrentUserIdOrNull();

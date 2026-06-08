@@ -774,6 +774,8 @@ function trackBehavior(targetType, targetId) {
   max-width: var(--container-xl, 1200px);
   margin: 0 auto;
   padding: var(--space-6, 1.5rem) var(--space-6, 1.5rem);
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .skeleton-grid {

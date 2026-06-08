@@ -176,7 +176,7 @@ function goToUser() {
 .card-image {
   position: relative;
   width: 100%;
-  max-height: 300px;
+  aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, var(--color-gray-100), var(--color-gray-200));
   display: flex;
   align-items: center;
@@ -186,8 +186,8 @@ function goToUser() {
 
 .cover-image {
   width: 100%;
-  height: auto;
-  max-height: 300px;
+  height: 100%;
+  object-fit: cover;
   transition: transform var(--duration-slow) var(--ease-out);
 }
 

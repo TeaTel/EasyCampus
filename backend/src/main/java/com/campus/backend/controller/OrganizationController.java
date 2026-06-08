@@ -131,6 +131,12 @@ public class OrganizationController {
         return Result.success(role);
     }
 
+    @PostMapping("/{orgId}/leave")
+    public Result<Void> leaveOrganization(@PathVariable Long orgId) {
+        orgService.leaveOrganization(orgId, SecurityUtils.getCurrentUserId());
+        return Result.success(null);
+    }
+
     @GetMapping("/{orgId}/audit-logs")
     public Result<List<OrgAuditLog>> getAuditLogs(@PathVariable Long orgId,
                                                    @RequestParam(defaultValue = "20") int limit) {

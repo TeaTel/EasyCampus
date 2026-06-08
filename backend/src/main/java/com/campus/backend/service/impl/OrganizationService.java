@@ -224,6 +224,24 @@ public class OrganizationService {
         return memberMapper.selectByOrgAndUser(orgId, userId);
     }
 
+    /**
+     * 普通成员退出组织
+     * 创建者(ADMIN)不能退出，只能解散组织
+     */
+    @Transactional
+    public void leaveOrganization(Long orgId, Long userId) {
+        OrgMember member = memberMapper.selectByOrgAndUser(orgId, userId);
+        if (member == null) {
+            throw new NotFoundException("您不是该组织成员");
+        }
+        if ("ADMIN".equals(member.getRole())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "创建者不能退出组织，如需解散请联系管理员");
+        }
+        memberMapper.delete(orgId, userId);
+        orgMapper.decrementMemberCount(orgId);
+        auditLog(orgId, userId, "LEAVE", userId, null);
+    }
+
     public List<OrgInvitation> getMyInvitations(Long userId) {
         return invitationMapper.selectByInviteeId(userId);
     }

@@ -153,7 +153,7 @@
               <img :src="user.avatar || defaultAvatar" class="user-avatar" loading="lazy" @error="onAvatarError" />
               <div class="user-info">
                 <div class="user-name-row">
-                  <span class="user-nickname">{{ user.nickname || user.username }}</span>
+                  <span class="user-nickname" v-html="highlightText(user.nickname || user.username, searchKeyword)"></span>
                   <span v-if="user.matchedField === 'nickname'" class="match-badge">昵称匹配</span>
                   <span v-else class="match-badge">用户名匹配</span>
                 </div>
@@ -162,7 +162,7 @@
                   <span v-if="user.campus">{{ user.campus }}</span>
                   <span v-if="user.major">{{ user.major }}</span>
                 </div>
-                <p v-if="user.bio" class="user-bio">{{ user.bio }}</p>
+                <p v-if="user.bio" class="user-bio" v-html="highlightText(user.bio, searchKeyword)"></p>
               </div>
             </div>
           </div>
@@ -362,15 +362,18 @@ function searchFromHistory(kw) {
 
 onMounted(() => {
   loadHistory()
-  if (route.query.keyword) {
-    keyword.value = route.query.keyword
+  /* 同时支持 keyword 和 q 两种 URL 参数格式 */
+  const queryKeyword = route.query.keyword || route.query.q
+  if (queryKeyword) {
+    keyword.value = queryKeyword
     doSearch()
   } else {
     searchInput.value?.focus()
   }
 })
 
-watch(() => route.query.keyword, (newKw) => {
+/* 同时监听 keyword 和 q 参数变化 */
+watch(() => route.query.keyword || route.query.q, (newKw) => {
   if (newKw && newKw !== searchKeyword.value) {
     keyword.value = newKw
     doSearch()
@@ -466,7 +469,7 @@ function highlightText(text, kw) {
   if (!text || !kw) return text || ''
   const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const regex = new RegExp(`(${escaped})`, 'gi')
-  return text.replace(regex, '<mark>$1</mark>')
+  return text.replace(regex, '<mark class="search-highlight">$1</mark>')
 }
 
 function formatPrice(price) {
@@ -1167,9 +1170,9 @@ function onImageError(e) {
   color: var(--color-gray-300, #d1d5db);
 }
 
-:deep(mark) {
-  background: var(--color-primary-50, #ecfdf5);
-  color: var(--color-primary-700, #047857);
+:deep(.search-highlight) {
+  background: #fef08a;
+  color: inherit;
   padding: 0 2px;
   border-radius: var(--radius-xs, 4px);
   font-weight: var(--font-semibold, 600);

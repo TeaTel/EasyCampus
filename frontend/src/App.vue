@@ -51,7 +51,8 @@ function initWebSocket() {
       wsManager.connect(token)
 
       wsManager.on('chat_message', (data) => {
-        console.log('收到新消息:', data)
+        // 收到新消息时刷新聊天未读数
+        notificationStore.fetchChatUnreadCount()
       })
     }
   }

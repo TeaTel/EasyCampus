@@ -52,6 +52,14 @@
         <div v-if="postTags.length" class="detail-tags">
           <span v-for="tag in postTags" :key="tag" class="tag-hashtag">{{ tag }}</span>
         </div>
+        <div v-if="isAdmin" class="admin-actions">
+          <button class="admin-btn" :class="{ active: post.isPinned }" @click="togglePin">
+            {{ post.isPinned ? '取消置顶' : '置顶' }}
+          </button>
+          <button class="admin-btn" :class="{ active: post.isEssence }" @click="toggleEssence">
+            {{ post.isEssence ? '取消加精' : '加精' }}
+          </button>
+        </div>
         <div v-if="post.userCampus" class="user-campus-info">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#999" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
           <span>发布者校区：{{ post.userCampus }}</span>
@@ -60,7 +68,7 @@
       </section>
 
       <section class="comment-section-wrapper">
-        <CommentSection :target-id="post.id" :target-type="'post'" :initial-comments="[]" />
+        <CommentSection :target-id="post.id" :target-type="'post'" :author-id="post.userId" :initial-comments="[]" />
       </section>
     </main>
 
@@ -94,10 +102,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { postApi, followApi, favoriteApi } from '../services/api'
 import { useAuthStore } from '../store/auth'
+import { useToast } from '../use/useToast'
 import DOMPurify from 'dompurify'
 import BackButton from '../components/BackButton.vue'
 import LikeButton from '../components/LikeButton.vue'
@@ -107,6 +116,9 @@ import ImageViewer from '../components/ImageViewer.vue'
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const toast = useToast()
+
+const isAdmin = computed(() => auth.currentUser?.role === 'ADMIN')
 
 const post = ref(null)
 const loading = ref(true)
@@ -117,6 +129,37 @@ const viewerVisible = ref(false)
 const viewerIndex = ref(0)
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
+
+/** 移动端虚拟键盘适配：键盘弹出时将底部栏固定在键盘上方 */
+function setupKeyboardAdapter() {
+  // 仅移动端生效
+  if (!window.visualViewport || window.innerWidth > 768) return null
+
+  const viewportHandler = () => {
+    const vv = window.visualViewport
+    const bottomBar = document.querySelector('.detail-page .bottom-bar')
+    if (!bottomBar) return
+
+    if (vv.height < window.innerHeight * 0.85) {
+      // 键盘弹出：将底部栏固定在可视区域底部（键盘上方）
+      bottomBar.style.bottom = (window.innerHeight - vv.height - vv.offsetTop) + 'px'
+    } else {
+      // 键盘收起：恢复原始位置
+      bottomBar.style.bottom = ''
+    }
+  }
+
+  window.visualViewport.addEventListener('resize', viewportHandler)
+  window.visualViewport.addEventListener('scroll', viewportHandler)
+
+  return () => {
+    window.visualViewport.removeEventListener('resize', viewportHandler)
+    window.visualViewport.removeEventListener('scroll', viewportHandler)
+  }
+}
+
+/** 键盘适配清理函数 */
+let cleanupKeyboard = null
 
 const postImages = computed(() => {
   if (!post.value) return []
@@ -140,7 +183,19 @@ const postTags = computed(() => {
   return post.value.tags.split(',').filter(t => t.trim())
 })
 
-onMounted(() => { loadPost() })
+onMounted(() => {
+  loadPost()
+  // 移动端键盘适配
+  cleanupKeyboard = setupKeyboardAdapter()
+})
+
+onUnmounted(() => {
+  // 清理键盘适配监听
+  if (cleanupKeyboard) {
+    cleanupKeyboard()
+    cleanupKeyboard = null
+  }
+})
 
 async function loadPost() {
   loading.value = true
@@ -152,10 +207,23 @@ async function loadPost() {
       if (post.value.userId && auth.isAuthenticated) checkFollowStatus(post.value.userId)
       if (auth.isAuthenticated) checkFavoriteStatus(route.params.id)
     } else {
-      error.value = res.message || '加载失败'
+      // 后端返回非200时，检查是否是内容不存在
+      const msg = res.message || ''
+      if (msg.includes('不存在') || msg.includes('未找到') || res.code === 404) {
+        error.value = '内容不存在或已被删除'
+      } else {
+        error.value = msg || '加载失败'
+      }
     }
   } catch (e) {
-    error.value = '加载失败，请检查网络连接'
+    // 区分404（内容不存在）和其他错误（网络问题）
+    const status = e?.response?.status
+    const message = e?.response?.data?.message || e?.message || ''
+    if (status === 404 || message.includes('不存在') || message.includes('未找到')) {
+      error.value = '内容不存在或已被删除'
+    } else {
+      error.value = '加载失败，请检查网络连接'
+    }
   } finally {
     loading.value = false
   }
@@ -206,6 +274,30 @@ async function toggleFavorite() {
   }
 }
 function focusComment() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }
+
+async function togglePin() {
+  if (!post.value) return
+  try {
+    const newState = !post.value.isPinned
+    await postApi.togglePin(post.value.id, newState)
+    post.value.isPinned = newState
+    toast.showToast(newState ? '已置顶' : '已取消置顶')
+  } catch (e) {
+    toast.showToast('操作失败')
+  }
+}
+
+async function toggleEssence() {
+  if (!post.value) return
+  try {
+    const newState = !post.value.isEssence
+    await postApi.toggleEssence(post.value.id, newState)
+    post.value.isEssence = newState
+    toast.showToast(newState ? '已加精' : '已取消加精')
+  } catch (e) {
+    toast.showToast('操作失败')
+  }
+}
 function handleShare() {
   navigator.clipboard?.writeText(window.location.href).then(() => {
     showMiniToast('链接已复制')
@@ -384,7 +476,7 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
 
 .gallery-img {
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -443,6 +535,34 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
   color: var(--color-primary-600, #059669);
   white-space: nowrap;
   cursor: pointer;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-btn {
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  background: var(--color-bg-primary, #fff);
+  color: var(--color-text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.admin-btn.active {
+  background: var(--color-primary-50, #ecfdf5);
+  border-color: var(--color-primary-500, #10b981);
+  color: var(--color-primary-600, #059669);
+}
+
+.admin-btn:active {
+  transform: scale(0.96);
 }
 
 .user-campus-info {

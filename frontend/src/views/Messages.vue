@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { messageApi } from '../services/api'
 
@@ -91,8 +91,24 @@ const unreadTotal = ref(0)
 // 默认头像
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI0UwRTBFRCIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTciIHI9IjgiIGZpbGw9IndoaXRlIi8+PC9zdmc+'
 
+/** 会话列表轮询定时器 */
+let convPollTimer = null
+
 onMounted(async () => {
   await loadConversations()
+  // 轮询刷新会话列表（每10秒，仅在页面可见时）
+  convPollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      loadConversations()
+    }
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (convPollTimer) {
+    clearInterval(convPollTimer)
+    convPollTimer = null
+  }
 })
 
 // 加载会话列表

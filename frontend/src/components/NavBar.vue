@@ -140,14 +140,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
-import { messageApi } from '../services/api'
+import { useNotificationStore } from '../store/notification'
 import PublishActionSheet from './PublishActionSheet.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const showPublishSheet = ref(false)
 
@@ -181,7 +182,8 @@ const allTabs = [
   }
 ]
 
-const unreadCount = ref(0)
+/** 从 notification store 读取聊天未读数 */
+const unreadCount = computed(() => notificationStore.chatUnreadCount.value)
 
 const showTabBar = computed(() => {
   return route.meta.showTabBar !== false
@@ -194,48 +196,18 @@ function isActive(path) {
   return route.path.startsWith(path)
 }
 
-async function fetchUnreadCount() {
-  if (!authStore.isAuthenticated) return
-
-  try {
-    const response = await messageApi.getUnreadCount()
-    if (response.code === 200) {
-      unreadCount.value = response.data || 0
-    }
-  } catch (error) {
-    console.error('获取未读消息数失败:', error)
-  }
-}
-
 watch(
   () => authStore.isAuthenticated,
   (isAuth) => {
     if (isAuth) {
-      fetchUnreadCount()
-    } else {
-      unreadCount.value = 0
+      // 登录时从 store 拉取最新未读数
+      notificationStore.fetchChatUnreadCount()
     }
   },
   { immediate: true }
 )
 
-/** 定时轮询未读消息数的定时器ID */
-let unreadTimer = null
 
-onMounted(() => {
-  unreadTimer = setInterval(() => {
-    if (authStore.isAuthenticated) {
-      fetchUnreadCount()
-    }
-  }, 60000)
-})
-
-onUnmounted(() => {
-  if (unreadTimer) {
-    clearInterval(unreadTimer)
-    unreadTimer = null
-  }
-})
 </script>
 
 <style scoped>

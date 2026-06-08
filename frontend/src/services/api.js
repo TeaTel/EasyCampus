@@ -659,6 +659,7 @@ export const organizationApi = {
   removeMember(orgId, userId) { return api.delete(`/v2/organizations/${orgId}/members/${userId}`) },
   changeRole(orgId, userId, role) { return api.put(`/v2/organizations/${orgId}/members/${userId}/role`, { role }) },
   getMyRole(orgId) { return api.get(`/v2/organizations/${orgId}/my-role`) },
+  leaveOrg(orgId) { return api.post(`/v2/organizations/${orgId}/leave`) },
   getAuditLogs(orgId, limit) { return api.get(`/v2/organizations/${orgId}/audit-logs`, { params: { limit } }) },
   approveOrg(id) { return api.put(`/v2/organizations/${id}/approve`) },
   rejectOrg(id) { return api.put(`/v2/organizations/${id}/reject`) }

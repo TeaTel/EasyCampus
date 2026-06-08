@@ -97,6 +97,45 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
+/** 移动端虚拟键盘适配：键盘弹出时将输入区域固定在键盘上方 */
+function setupKeyboardAdapter() {
+  // 仅移动端生效
+  if (!window.visualViewport || window.innerWidth > 768) return null
+
+  const viewportHandler = () => {
+    const vv = window.visualViewport
+    const inputArea = document.querySelector('.chat-room .input-area')
+    if (!inputArea) return
+
+    if (vv.height < window.innerHeight * 0.85) {
+      // 键盘弹出：将输入区域固定在可视区域底部（键盘上方）
+      inputArea.style.position = 'fixed'
+      inputArea.style.bottom = (window.innerHeight - vv.height - vv.offsetTop) + 'px'
+      inputArea.style.left = '0'
+      inputArea.style.right = '0'
+      inputArea.style.zIndex = '10'
+    } else {
+      // 键盘收起：恢复原始样式
+      inputArea.style.position = ''
+      inputArea.style.bottom = ''
+      inputArea.style.left = ''
+      inputArea.style.right = ''
+      inputArea.style.zIndex = ''
+    }
+  }
+
+  window.visualViewport.addEventListener('resize', viewportHandler)
+  window.visualViewport.addEventListener('scroll', viewportHandler)
+
+  return () => {
+    window.visualViewport.removeEventListener('resize', viewportHandler)
+    window.visualViewport.removeEventListener('scroll', viewportHandler)
+  }
+}
+
+/** 键盘适配清理函数 */
+let cleanupKeyboard = null
+
 const messages = ref([])
 const loadingHistory = ref(false)
 const sending = ref(false)
@@ -142,16 +181,36 @@ function handleDocumentClick(event) {
   }
 }
 
+/** 消息轮询定时器 */
+let messagePollTimer = null
+
 onMounted(async () => {
   await initChat()
   wsManager.on('chat_message', handleWsMessage)
   nextTick(() => inputRef.value?.focus())
   document.addEventListener('click', handleDocumentClick)
+  // 轮询刷新消息（每5秒，仅在页面可见时）
+  messagePollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && conversationId.value) {
+      loadMessages()
+    }
+  }, 5000)
+  // 移动端键盘适配
+  cleanupKeyboard = setupKeyboardAdapter()
 })
 
 onUnmounted(() => {
   wsManager.off('chat_message', handleWsMessage)
   document.removeEventListener('click', handleDocumentClick)
+  if (messagePollTimer) {
+    clearInterval(messagePollTimer)
+    messagePollTimer = null
+  }
+  // 清理键盘适配监听
+  if (cleanupKeyboard) {
+    cleanupKeyboard()
+    cleanupKeyboard = null
+  }
 })
 
 async function initChat() {

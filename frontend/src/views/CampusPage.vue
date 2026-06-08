@@ -87,7 +87,14 @@ const selectedCampus = ref('')
 const saving = ref(false)
 
 onMounted(async () => {
-  const user = authStore.currentUser.value
+  let user = authStore.currentUser.value
+  // 如果store中没有用户信息，主动从后端获取
+  if (!user) {
+    const result = await authStore.fetchUserInfo()
+    if (result.success) {
+      user = result.data
+    }
+  }
   if (user) {
     currentSchool.value = user.school || ''
     currentCampus.value = user.campus || ''
@@ -121,7 +128,7 @@ async function saveCampus() {
       toast.showToast(res.message || '保存失败')
     }
   } catch (e) {
-    toast.showToast('保存失败，请重试')
+    toast.showToast(e?.message || '保存失败，请重试')
   } finally {
     saving.value = false
   }

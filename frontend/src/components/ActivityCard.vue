@@ -26,7 +26,7 @@
       <div class="card-meta">
         <span class="meta-item meta-org">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-          {{ activity.organizerName || '未知' }}
+          {{ activity.userName || '活动组织者' }}
         </span>
         <span class="meta-item meta-time">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>

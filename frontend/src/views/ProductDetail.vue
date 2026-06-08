@@ -69,7 +69,7 @@
         </section>
 
         <section class="comment-section-wrapper">
-          <CommentSection :target-id="product.id" :target-type="'product'" :initial-comments="[]" />
+          <CommentSection :target-id="product.id" :target-type="'product'" :author-id="product.sellerId" :initial-comments="[]" />
         </section>
       </div>
     </main>
@@ -179,10 +179,23 @@ async function loadProduct() {
       if (product.value.sellerId && auth.isAuthenticated) checkFollowStatus(product.value.sellerId)
       if (auth.isAuthenticated) checkFavoriteStatus(product.value.id)
     } else {
-      error.value = res.message || '加载失败'
+      // 后端返回非200时，检查是否是内容不存在
+      const msg = res.message || ''
+      if (msg.includes('不存在') || msg.includes('未找到') || res.code === 404) {
+        error.value = '内容不存在或已被删除'
+      } else {
+        error.value = msg || '加载失败'
+      }
     }
   } catch (e) {
-    error.value = '网络错误，请检查网络连接'
+    // 区分404（内容不存在）和其他错误（网络问题）
+    const status = e?.response?.status
+    const message = e?.response?.data?.message || e?.message || ''
+    if (status === 404 || message.includes('不存在') || message.includes('未找到')) {
+      error.value = '内容不存在或已被删除'
+    } else {
+      error.value = '网络错误，请检查网络连接'
+    }
   } finally {
     loading.value = false
   }
@@ -215,6 +228,12 @@ function onLikeToggled(isLiked, count) {
 }
 
 async function toggleFavorite() {
+  /* 未登录时提示并跳转登录页 */
+  if (!auth.isAuthenticated) {
+    toast.showToast('请先登录')
+    router.push('/login')
+    return
+  }
   if (!product.value) return
   try {
     if (isFavorited.value) {

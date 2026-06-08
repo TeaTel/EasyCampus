@@ -113,8 +113,8 @@ function logout() {
   token.value = ''
   user.value = null
   
-  // 跳转到登录页
-  window.location.href = '/login'
+  // 跳转到首页
+  window.location.href = '/'
 }
 
 // 获取用户信息函数

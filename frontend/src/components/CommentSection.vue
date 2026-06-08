@@ -66,7 +66,9 @@ import LikeButton from './LikeButton.vue'
 const props = defineProps({
   targetId: { type: [Number, String], required: true },
   targetType: { type: String, default: 'post' },
-  initialComments: { type: Array, default: () => [] }
+  initialComments: { type: Array, default: () => [] },
+  /* 内容作者ID，内容作者可删除自己内容下的他人评论 */
+  authorId: { type: [Number, String], default: null }
 })
 
 const auth = useAuthStore()
@@ -83,7 +85,10 @@ const currentUserId = computed(() => auth.currentUser.value?.id)
 function isOwnComment(comment) {
   if (!currentUserId.value) return false
   const commentUid = comment.userId
-  return String(commentUid) === String(currentUserId.value)
+  /* 自己的评论可以删除；内容作者也可以删除自己内容下的他人评论 */
+  if (String(commentUid) === String(currentUserId.value)) return true
+  if (props.authorId && String(props.authorId) === String(currentUserId.value)) return true
+  return false
 }
 
 const commentApi = props.targetType === 'product' ? productCommentApi : postApi

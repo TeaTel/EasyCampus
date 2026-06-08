@@ -23,6 +23,7 @@
         <div class="org-actions" v-if="myRole">
           <span class="role-badge">{{ roleLabel(myRole.role) }}</span>
           <button v-if="myRole.role === 'ADMIN' || myRole.role === 'MODERATOR'" class="manage-btn" @click="showManage = !showManage">⚙ 管理</button>
+          <button v-if="myRole.role !== 'ADMIN'" class="leave-btn" @click="leaveOrg" :disabled="leaving">{{ leaving ? '退出中...' : '退出组织' }}</button>
         </div>
         <div class="org-actions" v-else>
           <button v-if="org.joinType === 'APPLY' && !hasApplied" class="join-btn" @click="applyJoin" :disabled="applying">{{ applying ? '提交中...' : '申请加入' }}</button>
@@ -101,6 +102,7 @@ const members = ref([])
 const auditLogs = ref([])
 const inviteUserId = ref('')
 const applying = ref(false)
+const leaving = ref(false)
 const hasApplied = ref(false)
 const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23eee" width="100" height="100"/><text x="50" y="54" text-anchor="middle" font-size="36" fill="%23999" font-family="sans-serif">?</text></svg>'
 
@@ -159,10 +161,37 @@ async function applyJoin() {
 async function approveReq(id) { await organizationApi.approveRequest(id); loadManageData(route.params.id) }
 async function rejectReq(id) { await organizationApi.rejectRequest(id); loadManageData(route.params.id) }
 async function changeRole(uid, role) { await organizationApi.changeRole(route.params.id, uid, role); loadManageData(route.params.id) }
-async function removeMem(uid) { const ok = await toast.showConfirm('确定移出该成员?'); if (!ok) return; await organizationApi.removeMember(route.params.id, uid); loadManageData(route.params.id) }
+async function removeMem(uid) {
+  const ok = await toast.showConfirm('确定移出该成员?')
+  if (!ok) return
+  try {
+    await organizationApi.removeMember(route.params.id, uid)
+    toast.showToast('已移除成员')
+    loadManageData(route.params.id)
+  } catch (e) {
+    toast.showToast(e?.response?.data?.message || e?.message || '移除失败')
+  }
+}
 async function doInvite() {
   if (!inviteUserId.value) return
   try { await organizationApi.invite(route.params.id, Number(inviteUserId.value)); toast.showToast('邀请已发送', 'success'); inviteUserId.value = '' } catch (e) { toast.showToast('邀请失败', 'error') }
+}
+
+async function leaveOrg() {
+  const ok = await toast.showConfirm('确定退出该组织？退出后需要重新申请加入')
+  if (!ok) return
+  leaving.value = true
+  try {
+    await organizationApi.leaveOrg(route.params.id)
+    toast.showToast('已退出组织')
+    // 退出后刷新页面状态：myRole清空，回到非成员视图
+    myRole.value = null
+    showManage.value = false
+  } catch (e) {
+    toast.showToast(e?.message || '退出失败，请重试')
+  } finally {
+    leaving.value = false
+  }
 }
 
 function typeLabel(t) { return { CLUB: '社团', STUDENT_ORG: '学生组织', BUSINESS: '商业', PERSONAL: '个人' }[t] || t }
@@ -191,6 +220,8 @@ function formatTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
 .org-actions { display: flex; gap: 10px; justify-content: center; align-items: center; }
 .role-badge { padding: 4px 14px; background: #E8F4FD; color: #1890FF; border-radius: 12px; font-size: 13px; font-weight: 600; }
 .manage-btn { padding: 8px 20px; border: 1px solid #DDE1E6; border-radius: 16px; background: #fff; font-size: 14px; cursor: pointer; }
+.leave-btn { padding: 8px 20px; border: 1px solid #FF4D4F; border-radius: 16px; background: #fff; color: #FF4D4F; font-size: 14px; cursor: pointer; }
+.leave-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .join-btn { padding: 10px 36px; border-radius: 20px; border: none; background: linear-gradient(135deg,var(--color-primary-500, #10b981),var(--color-primary-400, #34d399)); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
 .join-btn:disabled { opacity: 0.6; }
 .applied-badge { padding: 8px 20px; background: #FFF7E6; color: #FA8C16; border-radius: 16px; font-size: 14px; font-weight: 500; }

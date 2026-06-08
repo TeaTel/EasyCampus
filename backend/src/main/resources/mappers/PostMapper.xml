@@ -38,6 +38,17 @@
             <if test="query.isAd != null">
                 AND is_ad = #{query.isAd}
             </if>
+            <!-- 活动时间阶段过滤：基于start_time和end_time判断活动处于哪个阶段 -->
+            <if test="query.activityStatus != null and query.activityStatus == 'upcoming'">
+                AND start_time IS NOT NULL AND start_time > NOW()
+            </if>
+            <if test="query.activityStatus != null and query.activityStatus == 'ongoing'">
+                AND start_time IS NOT NULL AND start_time &lt;= NOW()
+                AND (end_time IS NULL OR end_time > NOW())
+            </if>
+            <if test="query.activityStatus != null and query.activityStatus == 'past'">
+                AND end_time IS NOT NULL AND end_time &lt;= NOW()
+            </if>
         </where>
     </sql>
 
@@ -76,6 +87,7 @@
             <if test="keyword != null and keyword != ''">
                 AND (p.title LIKE CONCAT('%', #{keyword}, '%')
                      OR p.content LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.tags LIKE CONCAT('%', #{keyword}, '%')
                      OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
                      OR u.username LIKE CONCAT('%', #{keyword}, '%'))
             </if>
@@ -92,6 +104,7 @@
             <if test="keyword != null and keyword != ''">
                 AND (p.title LIKE CONCAT('%', #{keyword}, '%')
                      OR p.content LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.tags LIKE CONCAT('%', #{keyword}, '%')
                      OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
                      OR u.username LIKE CONCAT('%', #{keyword}, '%'))
             </if>

@@ -40,7 +40,7 @@
         <button
           v-for="tab in filterTabs"
           :key="tab.key"
-          @click="activeFilter = tab.key"
+          @click="onFilterClick(tab.key)"
           :class="['filter-tab', { active: activeFilter === tab.key }]"
         >
           <svg v-if="tab.key === 'price'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -244,22 +244,31 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-watch(activeFilter, (newVal, oldVal) => {
+watch(activeFilter, (newVal) => {
   showCategoryFilter.value = newVal === 'category'
   showCampusFilter.value = newVal === 'campus'
   if (newVal !== 'category' && newVal !== 'campus') {
     showCategoryFilter.value = false
     showCampusFilter.value = false
   }
-  // 重复点击"价格"按钮时切换升序/降序
-  if (newVal === 'price' && oldVal === 'price') {
-    priceOrder.value = priceOrder.value === 'asc' ? 'desc' : 'asc'
-  } else if (newVal === 'price') {
-    priceOrder.value = 'asc'
-  }
   currentPage.value = 1
   loadProducts()
 })
+
+/* 点击筛选按钮：重复点击"价格"时切换升序/降序 */
+function onFilterClick(key) {
+  if (key === 'price' && activeFilter.value === 'price') {
+    // 重复点击价格按钮：切换排序方向
+    priceOrder.value = priceOrder.value === 'asc' ? 'desc' : 'asc'
+    currentPage.value = 1
+    loadProducts()
+  } else {
+    activeFilter.value = key
+    if (key === 'price') {
+      priceOrder.value = 'asc'
+    }
+  }
+}
 
 async function loadProducts(isLoadMore = false) {
   try {
