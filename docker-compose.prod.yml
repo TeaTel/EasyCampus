@@ -22,6 +22,8 @@ services:
       - ./backend/src/main/resources/migration-v3.sql:/docker-entrypoint-initdb.d/04-migration-v3.sql:ro
       - ./backend/src/main/resources/migration-v4-community.sql:/docker-entrypoint-initdb.d/05-migration-v4.sql:ro
       - ./backend/src/main/resources/migration-v5-ad.sql:/docker-entrypoint-initdb.d/06-migration-v5.sql:ro
+      - ./backend/src/main/resources/migration-v6-favorites.sql:/docker-entrypoint-initdb.d/07-migration-v6.sql:ro
+      - ./backend/src/main/resources/migration-v7-notifications.sql:/docker-entrypoint-initdb.d/08-migration-v7.sql:ro
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-Campus2026!}"]
