@@ -224,13 +224,13 @@ const routes = [
     path: '/orgs/create',
     name: 'CreateOrg',
     component: () => import('../views/CreateOrgPage.vue'),
-    meta: { title: '创建组织' }
+    meta: { requiresAuth: true, title: '创建组织' }
   },
   {
     path: '/orgs/my',
     name: 'MyOrgs',
     component: () => import('../views/MyOrgsPage.vue'),
-    meta: { title: '我的组织' }
+    meta: { requiresAuth: true, title: '我的组织' }
   },
   {
     path: '/orgs/discover',
@@ -266,7 +266,8 @@ const router = createRouter({
 
 // 白名单路径（无需登录即可访问）
 const publicPaths = ['/', '/login', '/register', '/forgot-password', '/db-test', '/products', '/products/:id', '/categories',
-  '/community', '/community/posts/:id', '/boards', '/boards/:id', '/users/:id', '/activities', '/activities/:id', '/profile', '/search']
+  '/community', '/community/posts/:id', '/boards', '/boards/:id', '/users/:id', '/activities', '/activities/:id', '/profile', '/search',
+  '/orgs/discover', '/orgs/:id']
 
 // 全局前置守卫
 router.beforeEach((to, from, next) => {
@@ -295,10 +296,10 @@ router.beforeEach((to, from, next) => {
     return next()
   }
 
-  // 需要认证的页面
+  // 需要认证的页面（不在白名单的路径默认需要认证）
   const token = localStorage.getItem('token')
 
-  if (to.meta.requiresAuth && (!token || !isValidToken(token))) {
+  if (!token || !isValidToken(token)) {
     // 无效token或未登录
     if (token && !isValidToken(token)) {
       localStorage.removeItem('token')

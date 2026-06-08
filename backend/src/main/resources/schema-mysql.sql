@@ -145,14 +145,14 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 CREATE TABLE IF NOT EXISTS favorites (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '收藏ID',
     user_id         BIGINT       NOT NULL COMMENT '用户ID',
-    product_id      BIGINT       NOT NULL COMMENT '商品ID',
+    product_id      BIGINT       NOT NULL COMMENT '目标ID（商品ID或帖子ID）',
+    target_type     VARCHAR(20)  NOT NULL DEFAULT 'PRODUCT' COMMENT '目标类型: PRODUCT/POST',
     created_at      DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    UNIQUE INDEX uk_user_product (user_id, product_id),
+    UNIQUE INDEX uk_user_target (user_id, product_id, target_type),
     INDEX idx_user_id (user_id),
     INDEX idx_product_id (product_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品收藏表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
 
 -- -----------------------------------------------------------
 -- 9. 社区帖子表

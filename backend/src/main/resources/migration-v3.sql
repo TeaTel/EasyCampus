@@ -134,8 +134,9 @@ CREATE TABLE IF NOT EXISTS favorites (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id         BIGINT       NOT NULL,
     product_id      BIGINT       NOT NULL,
+    target_type     VARCHAR(20)  NOT NULL DEFAULT 'PRODUCT',
     created_at      DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE INDEX uk_user_product (user_id, product_id),
+    UNIQUE INDEX uk_user_target (user_id, product_id, target_type),
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
 

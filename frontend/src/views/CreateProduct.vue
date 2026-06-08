@@ -397,7 +397,7 @@ async function handleSubmit() {
       campusTag: formData.value.campusTag || null,
       imageUrls: uploadedUrls.length > 0 ? uploadedUrls : null,
       coverImage: coverImage,
-      tags: tags.value.length > 0 ? tags.value : null
+      tags: tags.value.length > 0 ? tags.value.join(',') : null
     }
 
     const response = await productApi.createProduct(productData)
