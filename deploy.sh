@@ -122,6 +122,10 @@ echo "  容器状态:"
 docker compose -f docker-compose.prod.yml ps
 
 echo ""
+echo "  重新加载 Nginx 配置..."
+docker compose -f docker-compose.prod.yml restart nginx
+
+echo ""
 echo "  清理旧镜像..."
 docker image prune -f 2>/dev/null || true
 REMOTE_SCRIPT
