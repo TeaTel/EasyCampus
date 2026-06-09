@@ -168,6 +168,7 @@ public class UserServiceImpl implements UserService {
         // 发送验证码邮件
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("teatel0125@163.com");
             message.setTo(email);
             message.setSubject("校园社区平台 - 密码重置验证码");
             message.setText("您的验证码为: " + code + "\n\n验证码5分钟内有效，请勿泄露给他人。\n\n如非本人操作，请忽略此邮件。");

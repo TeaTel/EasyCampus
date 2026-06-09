@@ -58,6 +58,7 @@ spring:
       mail:
         smtp:
           auth: true
+          from: ${MAIL_USERNAME:teatel0125@163.com}
           ssl:
             enable: true
           socketFactory:
