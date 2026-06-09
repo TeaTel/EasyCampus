@@ -84,7 +84,6 @@ public class FavoriteController {
                         item.put("likeCount", post.getLikeCount());
                         item.put("commentCount", post.getCommentCount());
                         item.put("tags", post.getTags());
-                        item.put("campusTag", post.getCampusTag());
                         item.put("createdAt", post.getCreatedAt());
                         item.put("favoritedAt", fav.getCreatedAt());
                         item.put("targetType", "POST");

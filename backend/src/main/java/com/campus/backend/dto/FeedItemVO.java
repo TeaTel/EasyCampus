@@ -59,8 +59,4 @@ public class FeedItemVO {
     private Integer exposureBoost;
 
     private String tags;
-
-    private String campusTag;
-
-    private String userCampus;
 }

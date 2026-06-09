@@ -151,7 +151,6 @@ public class SearchServiceImpl implements SearchService {
             item.setLikeCount(toInt(row.get("like_count")));
             item.setCommentCount(toInt(row.get("comment_count")));
             item.setTags(toStr(row.get("tags")));
-            item.setCampusTag(toStr(row.get("campus_tag")));
             item.setCreatedAt(toLocalDateTime(row.get("created_at")));
 
             String userName = toStr(row.get("user_name"));
@@ -185,7 +184,6 @@ public class SearchServiceImpl implements SearchService {
             item.setViewCount(toInt(row.get("view_count")));
             item.setLikeCount(toInt(row.get("like_count")));
             item.setLocation(toStr(row.get("location")));
-            item.setCampusTag(toStr(row.get("campus_tag")));
             item.setCreatedAt(toLocalDateTime(row.get("created_at")));
 
             String sellerName = toStr(row.get("seller_name"));
@@ -209,7 +207,6 @@ public class SearchServiceImpl implements SearchService {
             item.setNickname(user.getNickname());
             item.setAvatar(user.getAvatar());
             item.setSchool(user.getSchool());
-            item.setCampus(user.getCampus());
             item.setMajor(user.getMajor());
             item.setBio(truncate(user.getBio(), 100));
 

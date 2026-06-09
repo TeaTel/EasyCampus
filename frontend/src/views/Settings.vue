@@ -41,13 +41,6 @@
               个人资料
             </h3>
 
-            <div class="setting-item" @click="$router.push('/campus')" style="cursor: pointer;">
-              <div class="setting-info">
-                <h4>我的校区</h4>
-                <p>{{ userCampus || '未设置' }}</p>
-              </div>
-              <button class="btn btn-outline">{{ userCampus ? '修改' : '去设置' }}</button>
-            </div>
           </div>
 
           <!-- 通知设置 -->
@@ -198,7 +191,6 @@ import NavBar from '../components/NavBar.vue'
 const authStore = useAuthStore()
 const toast = useToast()
 
-const userCampus = computed(() => authStore.currentUser?.campus || '')
 const saving = ref(false)
 const successMessage = ref('')
 

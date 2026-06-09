@@ -159,7 +159,6 @@
                 </div>
                 <div class="user-meta">
                   <span v-if="user.school">{{ user.school }}</span>
-                  <span v-if="user.campus">{{ user.campus }}</span>
                   <span v-if="user.major">{{ user.major }}</span>
                 </div>
                 <p v-if="user.bio" class="user-bio" v-html="highlightText(user.bio, searchKeyword)"></p>
@@ -295,7 +294,6 @@ const normalizedPosts = computed(() =>
     ...p,
     isLiked: p.isLiked || false,
     tags: p.tags || '',
-    campusTag: p.campusTag || '',
     coverImage: p.coverImage || ''
   }))
 )
@@ -309,8 +307,7 @@ const normalizedProducts = computed(() =>
     userAvatar: p.sellerAvatar || p.userAvatar || '',
     isLiked: p.isLiked || false,
     condition: p.condition || '',
-    tags: p.tags || '',
-    campusTag: p.campusTag || ''
+    tags: p.tags || ''
   }))
 )
 

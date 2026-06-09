@@ -62,9 +62,6 @@ public class ProductCreateDTO {
     /** 逗号分隔标签 */
     private String tags;
 
-    /** 校区标签 */
-    private String campusTag;
-
     /** 销售模式：FIXED_PRICE（一口价）/AUCTION（拍卖） */
     private String saleMode;
 }

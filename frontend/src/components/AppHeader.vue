@@ -101,8 +101,7 @@ const notificationStore = useNotificationStore()
 
 const headerTabs = [
   { key: 'following', label: '关注' },
-  { key: 'discover', label: '发现' },
-  { key: 'campus', label: '校区' }
+  { key: 'discover', label: '发现' }
 ]
 
 const desktopNavItems = [

@@ -68,7 +68,6 @@ public class ProductServiceImpl implements ProductService {
         BeanUtils.copyProperties(dto, product);
         product.setSellerId(sellerId);
         product.setStatus(1); // 在售
-        product.setCampusTag(dto.getCampusTag());
 
         // 处理图片列表 -> JSON字符串
         if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
@@ -199,7 +198,6 @@ public class ProductServiceImpl implements ProductService {
                     vo.setSellerName(seller.getNickname() != null ? seller.getNickname() : seller.getUsername());
                     vo.setSellerAvatar(seller.getAvatar());
                     vo.setSellerSchool(seller.getSchool());
-                    vo.setSellerCampus(seller.getCampus());
                 }
             }
         } catch (Exception ignored) {}

@@ -52,9 +52,6 @@
           <svg v-if="tab.key === 'category'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
           </svg>
-          <svg v-if="tab.key === 'campus'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
           {{ tab.label }}{{ tab.key === 'price' && activeFilter === 'price' ? (priceOrder === 'asc' ? '↑' : '↓') : '' }}
         </button>
       </div>
@@ -67,18 +64,6 @@
             :class="['category-chip', { active: selectedCategoryId === cat.id }]"
           >
             {{ cat.name }}
-          </button>
-        </div>
-      </transition>
-      <transition name="slide-down">
-        <div v-if="showCampusFilter" class="category-filter">
-          <button
-            v-for="campus in campusOptions"
-            :key="campus.value"
-            @click="selectCampus(campus.value)"
-            :class="['category-chip', { active: selectedCampus === campus.value }]"
-          >
-            {{ campus.label }}
           </button>
         </div>
       </transition>
@@ -196,26 +181,13 @@ const currentPage = ref(1)
 const pageSize = 20
 
 const showCategoryFilter = ref(false)
-const showCampusFilter = ref(false)
-const selectedCampus = ref('')
 
 const filterTabs = [
   { key: 'default', label: '综合' },
   { key: 'price', label: '价格' },
   { key: 'time', label: '最新' },
-  { key: 'category', label: '分类' },
-  { key: 'campus', label: '校区' }
+  { key: 'category', label: '分类' }
 ]
-
-const campusOptions = [
-   { value: '', label: '全部校区' },
-   { value: '南三区', label: '南三' },
-   { value: '南二区', label: '南二' },
-   { value: '南一区', label: '南一' },
-   { value: '中区', label: '中区' },
-   { value: '东区', label: '东区' },
-   { value: '西区', label: '西区' }
- ]
 
 const categories = [
   { id: null, name: '全部' },
@@ -246,10 +218,8 @@ onUnmounted(() => {
 
 watch(activeFilter, (newVal) => {
   showCategoryFilter.value = newVal === 'category'
-  showCampusFilter.value = newVal === 'campus'
-  if (newVal !== 'category' && newVal !== 'campus') {
+  if (newVal !== 'category') {
     showCategoryFilter.value = false
-    showCampusFilter.value = false
   }
   currentPage.value = 1
   loadProducts()
@@ -290,9 +260,6 @@ async function loadProducts(isLoadMore = false) {
     }
     if (selectedCategoryId.value) {
       params.categoryId = selectedCategoryId.value
-    }
-    if (selectedCampus.value) {
-      params.campusTag = selectedCampus.value
     }
     if (activeFilter.value === 'price') {
       params.sortBy = priceOrder.value === 'asc' ? 'price_asc' : 'price_desc'
@@ -352,17 +319,10 @@ function selectCategory(categoryId) {
   loadProducts()
 }
 
-function selectCampus(campus) {
-  selectedCampus.value = campus
-  currentPage.value = 1
-  loadProducts()
-}
-
 function resetFilters() {
   searchKeyword.value = ''
   activeFilter.value = 'default'
   selectedCategoryId.value = null
-  selectedCampus.value = ''
   currentPage.value = 1
   loadProducts()
 }

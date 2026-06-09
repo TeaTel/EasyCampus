@@ -189,15 +189,6 @@ const routes = [
     }
   },
   {
-    path: '/campus',
-    name: 'Campus',
-    component: () => import('../views/CampusPage.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '我的校区'
-    }
-  },
-  {
     path: '/settings',
     name: 'Settings',
     component: () => import('../views/Settings.vue'),

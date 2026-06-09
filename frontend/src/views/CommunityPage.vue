@@ -15,20 +15,8 @@
       </button>
     </div>
 
-    <div class="campus-tabs" v-if="campusTabs.length > 1">
-      <button
-        v-for="(tab, index) in campusTabs"
-        :key="tab.value"
-        :class="['tab-btn', { active: currentCampus === tab.value }]"
-        @click="switchCampus(tab.value)"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
-
     <div class="top-tabs">
-      <button :class="{ active: tab === 'feed' }" @click="tab = 'feed'">推荐</button>
-      <button :class="{ active: tab === 'posts' }" @click="tab = 'posts'">帖子</button>
+      <button :class="{ active: tab === 'latest' }" @click="tab = 'latest'">最新</button>
       <button :class="{ active: tab === 'hot' }" @click="tab = 'hot'">热门</button>
     </div>
 
@@ -51,27 +39,11 @@
 
       <div v-else class="feed-list">
         <PostCard
-          v-for="item in items.filter(i => i.itemType === 'POST')"
+          v-for="item in items"
           :key="'post-' + item.id"
           :post="item"
           @click="goToPost(item)"
         />
-        <div
-          v-for="item in items.filter(i => i.itemType === 'PRODUCT')"
-          :key="'product-' + item.id"
-          class="product-item"
-          @click="goToProduct(item.id)"
-        >
-          <img v-if="item.coverImage" :src="item.coverImage" class="product-image" />
-          <div class="product-info">
-            <h4>{{ item.title }}</h4>
-            <p class="product-desc">{{ truncate(item.content, 60) }}</p>
-            <div class="product-meta">
-              <span class="price">¥{{ item.price }}</span>
-              <span class="location">{{ item.location }}</span>
-            </div>
-          </div>
-        </div>
         <div ref="scrollTrigger" class="scroll-trigger"></div>
       </div>
 
@@ -94,16 +66,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { feedApi, postApi } from '../services/api'
+import { postApi } from '../services/api'
 import PostCard from '../components/PostCard.vue'
-import { useAuthStore } from '../store/auth'
 import { usePullRefresh } from '../use/usePullRefresh'
 
 const router = useRouter()
-const auth = useAuthStore()
-const tab = ref('feed')
+const tab = ref('latest')
 const items = ref([])
 const loading = ref(true)
 const loadingMore = ref(false)
@@ -112,27 +82,6 @@ const page = ref(1)
 const hasMore = ref(true)
 const scrollTrigger = ref(null)
 let observer = null
-
-const currentCampus = ref('')
-const campusTabs = computed(() => {
-  const userCampus = auth.currentUser?.campus || ''
-  const tabs = [{ value: '', label: '全部' }]
-  if (userCampus) {
-    tabs.push({ value: userCampus, label: userCampus })
-  }
-  const allCampuses = ['南三区', '南二区', '南一区', '中区', '东区', '西区']
-  allCampuses.forEach(c => {
-    if (c !== userCampus) tabs.push({ value: c, label: c })
-  })
-  return tabs
-})
-
-function switchCampus(value) {
-  currentCampus.value = value
-  page.value = 1
-  items.value = []
-  loadFeed()
-}
 
 onMounted(() => {
   loadFeed()
@@ -153,26 +102,12 @@ async function loadFeed() {
   loading.value = true
   error.value = null
   try {
-    const sortMap = { feed: 'time_desc', posts: 'time_desc', hot: 'hot' }
-    const campusParam = currentCampus.value || undefined
-    if (tab.value === 'posts') {
-      const res = await postApi.getPosts({ page: page.value, size: 10, sortBy: sortMap[tab.value], campusTag: campusParam })
-      if (res.code === 200) {
-        const list = res.data.list || []
-        const postItems = list.map(p => ({ ...p, itemType: 'POST', postTypeText: p.postTypeText }))
-        items.value = postItems
-        hasMore.value = list.length >= 10
-      }
-    } else {
-      const res = await feedApi.getFeed({ page: page.value, size: 12, campusTag: campusParam })
-      if (res.code === 200) {
-        const list = res.data.list || []
-        if (tab.value === 'hot') {
-          list.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
-        }
-        items.value = list
-        hasMore.value = list.length >= 12
-      }
+    const sortBy = tab.value === 'hot' ? 'hot' : 'time_desc'
+    const res = await postApi.getPosts({ page: page.value, size: 10, sortBy })
+    if (res.code === 200) {
+      const list = res.data.list || []
+      items.value = list.map(p => ({ ...p, itemType: 'POST', postTypeText: p.postTypeText }))
+      hasMore.value = list.length >= 10
     }
   } catch (e) {
     error.value = '加载失败，请检查网络连接'
@@ -185,22 +120,12 @@ async function loadMore() {
   loadingMore.value = true
   page.value++
   try {
-    const sortMap = { feed: 'time_desc', posts: 'time_desc', hot: 'hot' }
-    const campusParam = currentCampus.value || undefined
-    if (tab.value === 'posts') {
-      const res = await postApi.getPosts({ page: page.value, size: 10, sortBy: sortMap[tab.value], campusTag: campusParam })
-      if (res.code === 200) {
-        const list = res.data.list || []
-        items.value = [...items.value, ...list.map(p => ({ ...p, itemType: 'POST' }))]
-        hasMore.value = list.length >= 10
-      }
-    } else {
-      const res = await feedApi.getFeed({ page: page.value, size: 12, campusTag: campusParam })
-      if (res.code === 200) {
-        const list = res.data.list || []
-        items.value = [...items.value, ...list]
-        hasMore.value = list.length >= 12
-      }
+    const sortBy = tab.value === 'hot' ? 'hot' : 'time_desc'
+    const res = await postApi.getPosts({ page: page.value, size: 10, sortBy })
+    if (res.code === 200) {
+      const list = res.data.list || []
+      items.value = [...items.value, ...list.map(p => ({ ...p, itemType: 'POST' }))]
+      hasMore.value = list.length >= 10
     }
   } catch (e) {
     page.value--
@@ -224,7 +149,7 @@ function setupScrollObserver() {
   })
 }
 
-// 下拉刷新：重新加载数据
+// 下拉刷新
 const { isRefreshing, pullDistance, canTrigger } = usePullRefresh(async () => {
   page.value = 1
   hasMore.value = true
@@ -239,13 +164,7 @@ function goToPost(post) {
     router.push(`/community/posts/${post.id}`)
   }
 }
-function goToProduct(id) { router.push(`/products/${id}`) }
 function goToCreatePost() { router.push('/community/posts/create') }
-
-function truncate(str, len) {
-  if (!str) return ''
-  return str.length > len ? str.substring(0, len) + '...' : str
-}
 </script>
 
 <style scoped>
@@ -320,50 +239,6 @@ function truncate(str, len) {
 }
 
 .write-btn:active { transform: scale(0.95); }
-
-.campus-tabs {
-  display: flex;
-  gap: 0;
-  padding: 0 var(--space-4);
-  background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-light);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.campus-tabs::-webkit-scrollbar { display: none; }
-
-.tab-btn {
-  flex-shrink: 0;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  position: relative;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.tab-btn.active {
-  color: var(--color-primary-500, #10b981);
-  font-weight: 700;
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background: var(--color-primary-500, #10b981);
-  border-radius: 2px;
-}
 
 .top-tabs {
   display: flex;
@@ -508,83 +383,9 @@ function truncate(str, len) {
 }
 
 .feed-list {
-  /* 小红书风格瀑布流布局：手机默认2列 */
+  /* 小红书风格瀑布流布局 */
   column-count: 2;
   column-gap: 8px;
-}
-
-.product-item {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--color-border-light);
-  transition: all var(--duration-normal) var(--ease-out);
-  /* 瀑布流中防止卡片被截断 */
-  break-inside: avoid;
-  margin-bottom: 8px;
-}
-
-.product-item:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-2px);
-}
-
-.product-image {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  background: var(--color-bg-tertiary);
-}
-
-.product-info {
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.product-info h4 {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.product-desc {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--space-2);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: var(--leading-relaxed);
-}
-
-.product-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-}
-
-.price {
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--color-primary-600);
-}
-
-.location {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
 }
 
 .scroll-trigger {
@@ -666,13 +467,8 @@ function truncate(str, len) {
 
 @media (min-width: 769px) {
   .feed-list {
-    /* 平板3列瀑布流 */
     column-count: 3;
     column-gap: 8px;
-  }
-
-  .product-image {
-    height: 160px;
   }
 
   .top-tabs {
@@ -692,13 +488,8 @@ function truncate(str, len) {
 
 @media (min-width: 1025px) {
   .feed-list {
-    /* 桌面4列瀑布流 */
     column-count: 4;
     column-gap: 8px;
-  }
-
-  .product-image {
-    height: 180px;
   }
 }
 </style>

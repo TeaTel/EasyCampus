@@ -24,8 +24,6 @@ public class PostCreateDTO {
 
     private String tags;
 
-    private String campusTag;
-
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;

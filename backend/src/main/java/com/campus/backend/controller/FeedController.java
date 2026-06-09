@@ -5,10 +5,8 @@ import com.campus.backend.common.SecurityUtils;
 import com.campus.backend.dto.*;
 import com.campus.backend.entity.UserBehavior;
 import com.campus.backend.entity.UserFollow;
-import com.campus.backend.entity.User;
 import com.campus.backend.mapper.UserBehaviorMapper;
 import com.campus.backend.mapper.UserFollowMapper;
-import com.campus.backend.mapper.UserMapper;
 import com.campus.backend.service.PostService;
 import com.campus.backend.service.ProductService;
 import com.campus.backend.service.impl.RecommendationService;
@@ -30,7 +28,6 @@ public class FeedController {
     private final PostService postService;
     private final ProductService productService;
     private final UserFollowMapper userFollowMapper;
-    private final UserMapper userMapper;
     private final UserBehaviorMapper userBehaviorMapper;
     private final RecommendationService recommendationService;
 
@@ -68,8 +65,7 @@ public class FeedController {
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Long circleId,
-            @RequestParam(required = false) String tag,
-            @RequestParam(required = false) String campusTag) {
+            @RequestParam(required = false) String tag) {
 
         Long userId = SecurityUtils.getCurrentUserIdOrNull();
 
@@ -98,11 +94,6 @@ public class FeedController {
             productQuery.setTag(tag);
         }
 
-        if (campusTag != null && !campusTag.isEmpty()) {
-            postQuery.setCampusTag(campusTag);
-            productQuery.setCampusTag(campusTag);
-        }
-
         if ("following".equals(type) && userId != null) {
             List<Long> followeeIds = getFolloweeIds(userId);
             if (followeeIds.isEmpty()) {
@@ -113,14 +104,8 @@ public class FeedController {
                 productQuery.setSellerIds(followeeIds);
             }
         } else if ("campus".equals(type) && userId != null) {
-            List<Long> campusUserIds = getCampusUserIds(userId);
-            if (campusUserIds.isEmpty()) {
-                // 校区用户为空时，fallback到发现模式
-                type = "discover";
-            } else {
-                postQuery.setUserIds(campusUserIds);
-                productQuery.setSellerIds(campusUserIds);
-            }
+            // 校区模式已废弃，fallback到发现模式
+            type = "discover";
         }
 
         // 获取总数
@@ -164,8 +149,6 @@ public class FeedController {
             item.setIsAd(post.getIsAd());
             item.setExposureBoost(post.getExposureBoost());
             item.setTags(post.getTags());
-            item.setCampusTag(post.getCampusTag());
-            item.setUserCampus(post.getUserCampus());
             item.setCoverImage(post.getCoverImage());
             items.add(item);
         }
@@ -192,8 +175,6 @@ public class FeedController {
             item.setLocation(product.getLocation());
             item.setCreatedAt(product.getCreatedAt());
             item.setTags(product.getTags());
-            item.setCampusTag(product.getCampusTag());
-            item.setUserCampus(product.getSellerCampus());
             items.add(item);
         }
 
@@ -237,13 +218,5 @@ public class FeedController {
         return follows.stream()
                 .map(UserFollow::getFolloweeId)
                 .collect(Collectors.toList());
-    }
-
-    private List<Long> getCampusUserIds(Long userId) {
-        User currentUser = userMapper.selectById(userId);
-        if (currentUser == null || currentUser.getSchool() == null || currentUser.getSchool().isEmpty()) {
-            return List.of();
-        }
-        return userMapper.selectIdsBySchool(currentUser.getSchool());
     }
 }

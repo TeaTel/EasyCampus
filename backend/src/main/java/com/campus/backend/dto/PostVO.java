@@ -51,8 +51,6 @@ public class PostVO {
 
     private String tags;
 
-    private String campusTag;
-
     private String contact;
 
     private List<String> imageUrls;
@@ -62,8 +60,6 @@ public class PostVO {
     private Boolean isAd;
 
     private Integer exposureBoost;
-
-    private String userCampus;
 
     public String getPostTypeText() {
         if (postType == null) return "讨论";

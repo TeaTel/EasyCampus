@@ -41,9 +41,6 @@
             <if test="query.tag != null and query.tag != ''">
                 AND FIND_IN_SET(#{query.tag}, tags)
             </if>
-            <if test="query.campusTag != null and query.campusTag != ''">
-                AND campus_tag = #{query.campusTag}
-            </if>
         </where>
         <choose>
             <when test="query.sortBy == 'price_asc'">ORDER BY price ASC</when>
@@ -88,9 +85,6 @@
             <if test="query.hasStory != null">
                 AND has_story = #{query.hasStory}
             </if>
-            <if test="query.campusTag != null and query.campusTag != ''">
-                AND campus_tag = #{query.campusTag}
-            </if>
         </where>
     </select>
 
@@ -113,7 +107,6 @@
             <if test="hasStory != null">has_story = #{hasStory},</if>
             <if test="saleMode != null">sale_mode = #{saleMode},</if>
             <if test="tags != null">tags = #{tags},</if>
-            <if test="campusTag != null">campus_tag = #{campusTag},</if>
             <if test="status != null">status = #{status},</if>
             updated_at = CURRENT_TIMESTAMP
         </set>
@@ -124,7 +117,7 @@
         SELECT pr.id, pr.name, pr.description, pr.price, pr.original_price,
                pr.cover_image, pr.image_urls, pr.seller_id,
                pr.condition_level, pr.status, pr.view_count, pr.like_count,
-               pr.location, pr.campus_tag, pr.created_at,
+               pr.location, pr.created_at,
                u.nickname AS seller_name, u.avatar AS seller_avatar,
                u.username AS seller_username
         FROM products pr

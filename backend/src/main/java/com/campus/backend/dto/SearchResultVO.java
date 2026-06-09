@@ -32,7 +32,6 @@ public class SearchResultVO {
         private Integer likeCount;
         private Integer commentCount;
         private String tags;
-        private String campusTag;
         private LocalDateTime createdAt;
         private String matchedField;
     }
@@ -56,7 +55,6 @@ public class SearchResultVO {
         private Integer viewCount;
         private Integer likeCount;
         private String location;
-        private String campusTag;
         private LocalDateTime createdAt;
         private String matchedField;
     }
@@ -68,7 +66,6 @@ public class SearchResultVO {
         private String nickname;
         private String avatar;
         private String school;
-        private String campus;
         private String major;
         private String bio;
         private String matchedField;

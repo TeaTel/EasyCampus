@@ -25,21 +25,6 @@
         <TagInput v-model="tags" :preset-tags="presetTags" :max-tags="5" placeholder="输入标签后按回车或逗号分隔..." />
       </div>
 
-      <div class="campus-tag-section">
-        <div class="section-label">校区标签（必选）</div>
-        <div class="campus-options">
-          <button
-            v-for="campus in campusOptions"
-            :key="campus"
-            class="campus-btn"
-            :class="{ active: campusTag === campus }"
-            @click="campusTag = campus"
-          >
-            {{ campus }}
-          </button>
-        </div>
-      </div>
-
       <!-- 活动类型时显示联系方式输入 -->
       <div v-if="postType === 'ACTIVITY'" class="contact-section">
         <div class="section-label">报名联系方式（必填，报名者可见）</div>
@@ -64,15 +49,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { postApi } from '../services/api'
-import { useAuthStore } from '../store/auth'
 import TagInput from '../components/TagInput.vue'
 import ImageUploader from '../components/ImageUploader.vue'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const title = ref('')
 const content = ref('')
 const postType = ref('DISCUSSION')
@@ -80,7 +63,6 @@ const error = ref(null)
 const submitting = ref(false)
 const imageUrls = ref([])
 const tags = ref([])
-const campusTag = ref('')
 const contact = ref('')
 
 const postTypes = [
@@ -97,13 +79,10 @@ const presetTags = [
   '电影', '游戏', '留学', '吐槽', '美妆'
 ]
 
-const campusOptions = ['南三区', '南二区', '南一区', '中区', '东区', '西区']
-
 const canSubmit = computed(() =>
   title.value.trim().length >= 2 &&
   content.value.trim().length > 0 &&
   tags.value.length > 0 &&
-  campusTag.value &&
   (postType.value !== 'ACTIVITY' || contact.value.trim()) &&
   !submitting.value
 )
@@ -112,7 +91,6 @@ const missingHint = computed(() => {
   if (title.value.trim().length < 2) return '请填写标题'
   if (!content.value.trim()) return '请填写内容'
   if (tags.value.length === 0) return '请添加标签'
-  if (!campusTag.value) return '请选择校区'
   if (postType.value === 'ACTIVITY' && !contact.value.trim()) return '请填写报名联系方式'
   return ''
 })
@@ -129,7 +107,6 @@ async function submitPost() {
       imageUrls: imageUrls.value.length > 0 ? imageUrls.value : null,
       coverImage: imageUrls.value.length > 0 ? imageUrls.value[0] : null,
       tags: tags.value.length > 0 ? tags.value.join(',') : null,
-      campusTag: campusTag.value,
       contact: postType.value === 'ACTIVITY' ? contact.value.trim() : null
     })
     if (res.code === 200) {
@@ -143,13 +120,6 @@ async function submitPost() {
     submitting.value = false
   }
 }
-
-onMounted(() => {
-  const user = authStore.currentUser.value
-  if (user?.campus) {
-    campusTag.value = user.campus
-  }
-})
 </script>
 
 <style scoped>
@@ -228,14 +198,6 @@ onMounted(() => {
 }
 .char-count { text-align: right; font-size: 12px; color: var(--color-text-tertiary, #999); padding: 4px 0; }
 .tag-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 16px; }
-.campus-tag-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 16px; }
-.campus-options { display: flex; flex-wrap: wrap; gap: 8px; }
-.campus-btn {
-  padding: 6px 14px; border-radius: 16px; border: 1px solid #e0e0e0;
-  background: #fff; font-size: 13px; cursor: pointer; color: var(--color-text-secondary, #666);
-  transition: all 0.15s;
-}
-.campus-btn.active { border-color: var(--color-primary-500, #10b981); color: var(--color-primary-500, #10b981); background: var(--color-primary-50, #ecfdf5); }
 .contact-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 16px; }
 .contact-input { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
 .contact-input:focus { border-color: var(--color-primary-500, #10b981); }

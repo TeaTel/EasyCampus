@@ -131,20 +131,6 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label required">所属校区</label>
-          <div class="campus-options">
-            <button
-              v-for="campus in campusOptions"
-              :key="campus"
-              @click="formData.campusTag = campus"
-              :class="['campus-btn', { active: formData.campusTag === campus }]"
-            >
-              {{ campus }}
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
           <label class="form-label">交易地点</label>
           <input
             type="text"
@@ -207,8 +193,7 @@ const formData = ref({
   categoryId: '',
   conditionLevel: null,
   deliveryMethod: 3,
-  location: '',
-  campusTag: ''
+  location: ''
 })
 
 const imageUrls = ref([])
@@ -228,8 +213,7 @@ const errors = reactive({
   description: '',
   price: '',
   categoryId: '',
-  conditionLevel: '',
-  campusTag: ''
+  conditionLevel: ''
 })
 
 const conditions = [
@@ -245,8 +229,6 @@ const deliveryMethods = [
   { value: 2, label: '快递' },
   { value: 3, label: '均可' }
 ]
-
-const campusOptions = ['南三区', '南二区', '南一区', '中区', '东区', '西区']
 
 function selectCondition(value) {
   formData.value.conditionLevel = value
@@ -294,13 +276,6 @@ function validateField(field) {
         errors.conditionLevel = ''
       }
       break
-    case 'campusTag':
-      if (!formData.value.campusTag) {
-        errors.campusTag = '请选择校区'
-      } else {
-        errors.campusTag = ''
-      }
-      break
   }
 }
 
@@ -314,8 +289,7 @@ function validateAll() {
   validateField('price')
   validateField('categoryId')
   validateField('conditionLevel')
-  validateField('campusTag')
-  return !errors.name && !errors.description && !errors.price && !errors.categoryId && !errors.conditionLevel && !errors.campusTag
+  return !errors.name && !errors.description && !errors.price && !errors.categoryId && !errors.conditionLevel
 }
 
 const isFormValid = computed(() => {
@@ -324,8 +298,7 @@ const isFormValid = computed(() => {
     formData.value.description.trim().length > 0 &&
     formData.value.price > 0 &&
     formData.value.categoryId !== '' &&
-    formData.value.conditionLevel !== null &&
-    formData.value.campusTag !== ''
+    formData.value.conditionLevel !== null
   )
 })
 
@@ -335,7 +308,6 @@ const missingHint = computed(() => {
   if (!formData.value.price || formData.value.price <= 0) return '请设置价格'
   if (!formData.value.categoryId) return '请选择分类'
   if (!formData.value.conditionLevel) return '请选择成色'
-  if (!formData.value.campusTag) return '请选择校区'
   return ''
 })
 
@@ -394,7 +366,6 @@ async function handleSubmit() {
       conditionLevel: formData.value.conditionLevel,
       deliveryMethod: formData.value.deliveryMethod,
       location: formData.value.location.trim() || null,
-      campusTag: formData.value.campusTag || null,
       imageUrls: uploadedUrls.length > 0 ? uploadedUrls : null,
       coverImage: coverImage,
       tags: tags.value.length > 0 ? tags.value.join(',') : null
@@ -819,34 +790,6 @@ onMounted(() => {
 }
 
 .condition-option:active {
-  transform: scale(0.95);
-}
-
-.campus-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.campus-btn {
-  padding: 9px 18px;
-  background-color: #f5f5f5;
-  border: 1px solid transparent;
-  border-radius: 18px;
-  font-size: 14px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.campus-btn.active {
-  background-color: #E8F5E9;
-  border-color: #81C784;
-  color: #2E7D32;
-  font-weight: 600;
-}
-
-.campus-btn:active {
   transform: scale(0.95);
 }
 

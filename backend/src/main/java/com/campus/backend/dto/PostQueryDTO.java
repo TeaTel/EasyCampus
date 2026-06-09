@@ -20,9 +20,6 @@ public class PostQueryDTO {
 
     private String tag;
 
-    /** 校区标签 */
-    private String campusTag;
-
     /** 活动时间阶段过滤: upcoming(即将开始), ongoing(进行中), past(已结束)，仅对ACTIVITY类型生效 */
     private String activityStatus;
 

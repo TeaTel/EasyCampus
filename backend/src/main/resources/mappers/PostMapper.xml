@@ -32,9 +32,6 @@
             <if test="query.tag != null and query.tag != ''">
                 AND FIND_IN_SET(#{query.tag}, tags)
             </if>
-            <if test="query.campusTag != null and query.campusTag != ''">
-                AND campus_tag = #{query.campusTag}
-            </if>
             <if test="query.isAd != null">
                 AND is_ad = #{query.isAd}
             </if>
@@ -77,7 +74,7 @@
     <select id="searchPosts" resultType="map">
         SELECT p.id, p.user_id, p.title, p.content, p.post_type,
                p.view_count, p.like_count, p.comment_count,
-               p.tags, p.campus_tag, p.created_at,
+               p.tags, p.created_at,
                u.nickname AS user_name, u.avatar AS user_avatar,
                u.username AS user_username
         FROM posts p
