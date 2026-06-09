@@ -539,7 +539,7 @@ function goToRegister() {
 
 .avatar-section {
   position: relative;
-  margin-bottom: var(--space-4);
+  margin: 0 auto var(--space-4);
   cursor: pointer;
   transition: transform var(--duration-normal) var(--ease-spring);
 }

@@ -185,13 +185,16 @@ async function fetchStats() {
       favoriteApi.getFavoriteCount(),
       postApi.getUserPosts(currentUser.value?.id)
     ])
+    /* 使用局部变量分别计数，避免 stats.published 被重复累加（bug：原代码用 += 累加帖子数，API 失败时不重置基础值） */
+    let productCount = 0
+    let postCount = 0
     if (myProductsRes.status === 'fulfilled' && myProductsRes.value?.code === 200) {
-      stats.published = (myProductsRes.value.data || []).length
+      productCount = (myProductsRes.value.data || []).length
     }
-    // 统计用户发布的帖子数量，累加到发布数
     if (myPostsRes.status === 'fulfilled' && myPostsRes.value?.code === 200) {
-      stats.published += (myPostsRes.value.data || []).length
+      postCount = (myPostsRes.value.data || []).length
     }
+    stats.published = productCount + postCount
     if (favCountRes.status === 'fulfilled' && favCountRes.value?.code === 200) {
       stats.favorites = favCountRes.value.data || 0
     }

@@ -105,8 +105,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { favoriteApi } from '../services/api'
+import { useToast } from '../use/useToast'
 
 const router = useRouter()
+const toast = useToast()
 const items = ref([])
 const total = ref(0)
 const loading = ref(true)
@@ -166,7 +168,7 @@ async function removeFavoriteItem(targetId) {
     items.value = items.value.filter(item => item.id !== targetId)
     total.value = Math.max(0, total.value - 1)
   } catch (e) {
-    console.error('取消收藏失败:', e)
+    toast.showToast(e?.message || '取消收藏失败', 'error')
   }
 }
 
@@ -184,7 +186,7 @@ async function loadFavorites() {
     }
   } catch (e) {
     console.error('加载收藏失败:', e)
-    error.value = '加载失败，请检查网络后重试'
+    error.value = e?.message || '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
