@@ -8,6 +8,7 @@
       </div>
     </div>
 
+    <!-- 有广告Banner时：显示轮播 -->
     <section v-if="banners.length > 0" class="banner-section" :class="{ 'banner-desktop': !isMobile, 'banner-mobile': isMobile }" @wheel.prevent="!isMobile && onBannerWheel">
       <!-- 桌面端：无限循环轮播 -->
       <template v-if="!isMobile">
@@ -76,6 +77,27 @@
           </div>
         </div>
       </template>
+    </section>
+
+    <!-- 无广告Banner时：显示广告推流占位海报 -->
+    <section v-else class="banner-section banner-placeholder" @click="goToAdCreate">
+      <div class="banner-slide placeholder-slide">
+        <div class="banner-overlay placeholder-overlay"></div>
+        <div class="banner-content placeholder-content">
+          <span class="banner-ad-badge">推广位招租</span>
+          <h2 class="banner-title">广告推流</h2>
+          <p class="banner-subtitle">选择套餐发布广告，让你的内容获得更多曝光</p>
+          <button class="banner-cta" @click.stop="goToAdCreate">立即发布</button>
+        </div>
+        <!-- 装饰背景图标 -->
+        <div class="placeholder-icon-wrap">
+          <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+      </div>
     </section>
 
     <main class="feed-content">
@@ -549,6 +571,11 @@ function handleBannerCta(banner) {
   if (banner && banner.route) {
     router.push(banner.route)
   }
+}
+
+/** 跳转到广告编辑页（我的广告） */
+function goToAdCreate() {
+  router.push('/ads/create')
 }
 
 /** 封面图加载失败时隐藏 img 元素，露出 fallback 渐变背景 */
@@ -1366,6 +1393,52 @@ function trackBehavior(targetType, targetId) {
 @media (min-width: 1025px) {
   .home-page {
     padding-top: 0;
+  }
+}
+
+/* ===== 广告推流占位海报 ===== */
+.banner-placeholder {
+  cursor: pointer;
+}
+
+.placeholder-slide {
+  /* 使用偏蓝紫色渐变，与广告 banner 的绿色渐变区分 */
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #a78bfa 100%);
+}
+
+.placeholder-overlay {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.15) 60%, transparent 100%);
+}
+
+.placeholder-content {
+  /* 继承 banner-content 的定位，无需额外设置 */
+}
+
+/* 装饰背景图标：绝对定位在右侧 */
+.placeholder-icon-wrap {
+  position: absolute;
+  right: var(--space-8, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .banner-placeholder {
+    aspect-ratio: auto;
+    min-height: 140px;
+    max-height: 180px;
+    border-radius: 0;
+  }
+
+  .placeholder-icon-wrap {
+    right: var(--space-4, 1rem);
+  }
+
+  .placeholder-icon-wrap svg {
+    width: 48px;
+    height: 48px;
   }
 }
 </style>
