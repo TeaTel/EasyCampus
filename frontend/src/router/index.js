@@ -41,7 +41,7 @@ const routes = [
     path: '/products/:id',
     name: 'ProductDetail',
     component: () => import('../views/ProductDetail.vue'),
-    meta: { title: '商品详情', transition: 'slide' }
+    meta: { title: '商品详情', transition: 'slide', showTabBar: false }
   },
   {
     path: '/products/create',
@@ -102,7 +102,7 @@ const routes = [
     path: '/community/posts/:id',
     name: 'PostDetail',
     component: () => import('../views/PostDetailPage.vue'),
-    meta: { title: '帖子详情', transition: 'slide' }
+    meta: { title: '帖子详情', transition: 'slide', showTabBar: false }
   },
   {
     path: '/ads/create',

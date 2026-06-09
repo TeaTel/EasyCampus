@@ -583,7 +583,7 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: var(--z-sticky, 200);
   display: flex;
   align-items: center;
   height: 50px;
