@@ -70,7 +70,6 @@ class DataPersistenceTest {
         UserRegisterDTO dto = new UserRegisterDTO();
         dto.setUsername(uniqueUsername);
         dto.setPassword("Test123456");
-        dto.setPhone("1990000" + System.currentTimeMillis() % 10000);
         dto.setEmail(uniqueUsername + "@test.com");
 
         UserVO created = userService.register(dto);
@@ -94,7 +93,6 @@ class DataPersistenceTest {
         UserRegisterDTO dto = new UserRegisterDTO();
         dto.setUsername(uniqueUsername);
         dto.setPassword(rawPassword);
-        dto.setPhone("1980000" + System.currentTimeMillis() % 10000);
 
         userService.register(dto);
 
@@ -115,7 +113,6 @@ class DataPersistenceTest {
         UserRegisterDTO userDto = new UserRegisterDTO();
         userDto.setUsername(uniqueUsername);
         userDto.setPassword("Test123456");
-        userDto.setPhone("1970000" + System.currentTimeMillis() % 10000);
         UserVO user = userService.register(userDto);
 
         ProductCreateDTO dto = new ProductCreateDTO();
@@ -146,7 +143,6 @@ class DataPersistenceTest {
         UserRegisterDTO userDto = new UserRegisterDTO();
         userDto.setUsername(uniqueUsername);
         userDto.setPassword("Test123456");
-        userDto.setPhone("1960000" + System.currentTimeMillis() % 10000);
         UserVO user = userService.register(userDto);
 
         PostCreateDTO dto = new PostCreateDTO();
@@ -173,7 +169,6 @@ class DataPersistenceTest {
         UserRegisterDTO dto = new UserRegisterDTO();
         dto.setUsername(uniqueUsername);
         dto.setPassword("Test123456");
-        dto.setPhone("1950000" + System.currentTimeMillis() % 10000);
         UserVO user = userService.register(dto);
 
         User updateData = new User();
@@ -220,7 +215,6 @@ class DataPersistenceTest {
         UserRegisterDTO dto = new UserRegisterDTO();
         dto.setUsername(uniqueUsername);
         dto.setPassword("Test123456");
-        dto.setPhone("1940000" + System.currentTimeMillis() % 10000);
         UserVO user = userService.register(dto);
 
         User existingUser = userMapper.selectById(user.getId());
