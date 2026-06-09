@@ -26,6 +26,7 @@
               @error="onCoverError"
               alt=""
             />
+            <div class="banner-overlay"></div>
             <div class="banner-content">
               <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
               <h2 class="banner-title">{{ banner.title }}</h2>
@@ -632,17 +633,23 @@ function trackBehavior(targetType, targetId) {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  z-index: 1;
+  z-index: 0;
 }
 
-/* 文字区域：仅在底部加半透遮罩确保文字可读，不覆盖整张图 */
+/* 蒙版覆盖层：左深右浅渐变，确保左侧文字可读，右侧图片可见 */
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  pointer-events: none; /* 不阻挡下方按钮点击 */
+}
+
+/* 文字区域：绝对定位在左侧，无额外背景 */
 .banner-content {
   position: relative;
   z-index: 2;
   max-width: 520px;
-  padding: var(--space-4, 1rem);
-  border-radius: var(--radius-lg, 12px);
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.15) 60%, transparent 100%);
 }
 
 .banner-title {
