@@ -56,8 +56,16 @@
             </div>
             <div class="package-detail-grid">
               <div class="detail-item">
-                <span class="detail-label">曝光提升</span>
-                <span class="detail-value highlight">{{ pkg.exposureBoost }}x</span>
+                <span class="detail-label">推送间隔</span>
+                <span class="detail-value highlight">每{{ pkg.interval }}条</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">首页Banner</span>
+                <span class="detail-value" :class="{ highlight: pkg.hasBanner }">{{ pkg.hasBanner ? '有' : '无' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">推荐流</span>
+                <span class="detail-value" :class="{ highlight: pkg.hasRecommendation }">{{ pkg.hasRecommendation ? '有' : '无' }}</span>
               </div>
               <div class="detail-item">
                 <span class="detail-label">预计曝光</span>
@@ -89,8 +97,16 @@
               <span>{{ selectedPackageInfo?.name }}</span>
             </div>
             <div class="pay-info-row">
-              <span>曝光提升</span>
-              <span>{{ selectedPackageInfo?.exposureBoost }}x</span>
+              <span>推送间隔</span>
+              <span>每 {{ selectedPackageInfo?.interval }} 条内容出现1次</span>
+            </div>
+            <div class="pay-info-row">
+              <span>首页Banner</span>
+              <span>{{ selectedPackageInfo?.hasBanner ? '有' : '无' }}</span>
+            </div>
+            <div class="pay-info-row">
+              <span>推荐流</span>
+              <span>{{ selectedPackageInfo?.hasRecommendation ? '有' : '无' }}</span>
             </div>
             <div class="pay-info-row">
               <span>预计曝光</span>

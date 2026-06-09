@@ -373,13 +373,14 @@ function onBannerWheel(e) {
 
 async function fetchAdBanners() {
   try {
-    const res = await postApi.getPosts({ isAd: true, sortBy: 'hot', size: 5 })
+    const res = await postApi.getPosts({ isAd: true, sortBy: 'hot', size: 20 })
     if (res.code === 200) {
       const data = res.data || {}
       const list = Array.isArray(data) ? data : (data.list || [])
-      adBanners.value = list
+      // 仅 Premium 套餐（exposureBoost >= 10）享有首页Banner位
+      adBanners.value = list.filter(ad => (ad.exposureBoost || 0) >= 10)
       // 有广告贴时回到第一条真实 banner
-      if (list.length > 0) displayIndex.value = 1
+      if (adBanners.value.length > 0) displayIndex.value = 1
     }
   } catch (e) {
     // 广告加载失败不阻塞页面
