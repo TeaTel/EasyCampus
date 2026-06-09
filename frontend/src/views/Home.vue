@@ -447,6 +447,7 @@ async function loadFeed(isLoadMore = false) {
       loadingMore.value = true
     } else {
       loading.value = true
+      loadedIds.value = new Set()
     }
 
     const params = {
@@ -1318,10 +1319,6 @@ function trackBehavior(targetType, targetId) {
 }
 
 @media (max-width: 768px) {
-  .banner-section {
-    display: none;
-  }
-
   .skeleton-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-2, 0.5rem);
