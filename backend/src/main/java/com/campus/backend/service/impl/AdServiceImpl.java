@@ -8,6 +8,7 @@ import com.campus.backend.exception.NotFoundException;
 import com.campus.backend.mapper.PostMapper;
 import com.campus.backend.service.AdService;
 import com.campus.backend.service.PostService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,6 +92,16 @@ public class AdServiceImpl implements AdService {
         post.setPostType(dto.getPostType() != null ? dto.getPostType() : "SHOWCASE");
         post.setTags(dto.getTags());
         post.setIsAd(true);
+
+        // 处理图片：将 imageUrls 列表序列化为 JSON 字符串存入数据库
+        if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
+            try {
+                post.setImageUrls(new ObjectMapper().writeValueAsString(dto.getImageUrls()));
+            } catch (Exception e) {
+                log.warn("广告图片URL序列化失败", e);
+            }
+        }
+        post.setCoverImage(dto.getCoverImage());
 
         AdPackageVO pkg = getAdPackage(dto.getPackageId());
         if (pkg != null) {

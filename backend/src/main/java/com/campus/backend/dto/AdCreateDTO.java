@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class AdCreateDTO {
 
@@ -21,4 +23,10 @@ public class AdCreateDTO {
 
     /** 内容类型：SHOWCASE(默认) 或 ACTIVITY */
     private String postType;
+
+    /** 图片URL列表 */
+    private List<String> imageUrls;
+
+    /** 封面图片URL */
+    private String coverImage;
 }
