@@ -86,6 +86,35 @@
             </svg>
 
             <svg
+              v-else-if="tab.icon === 'product'"
+              class="tab-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
+                :fill="isActive(tab.path) ? 'var(--color-primary-500)' : 'none'"
+                :stroke="isActive(tab.path) ? 'var(--color-primary-500)' : 'currentColor'"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                x1="3" y1="6" x2="21" y2="6"
+                :stroke="isActive(tab.path) ? 'var(--color-primary-500)' : 'currentColor'"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+              <path
+                d="M16 10a4 4 0 01-8 0"
+                :stroke="isActive(tab.path) ? 'var(--color-primary-500)' : 'currentColor'"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <svg
               v-else-if="tab.icon === 'activity'"
               class="tab-icon"
               viewBox="0 0 24 24"
@@ -163,6 +192,12 @@ const allTabs = [
     path: '/community',
     label: '社区',
     icon: 'community',
+    badge: false
+  },
+  {
+    path: '/products',
+    label: '商品',
+    icon: 'product',
     badge: false
   },
   {
