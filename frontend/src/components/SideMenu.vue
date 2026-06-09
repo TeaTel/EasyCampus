@@ -48,7 +48,6 @@
           <div class="menu-item" @click="goRoute('/my-products')">
             <span class="menu-icon">📦</span>
             <span class="menu-text">商品与帖子</span>
-            <span v-if="stats.published > 0" class="menu-badge">{{ stats.published }}</span>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
           </div>
           <div class="menu-item" @click="goRoute('/favorites')">
