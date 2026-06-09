@@ -54,7 +54,6 @@
           <div class="menu-item" @click="goRoute('/favorites')">
             <span class="menu-icon">❤️</span>
             <span class="menu-text">我的收藏</span>
-            <span v-if="stats.favorites > 0" class="menu-badge">{{ stats.favorites }}</span>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
           </div>
           <div class="menu-item" @click="goRoute('/notifications')">
@@ -138,7 +137,7 @@ import { reactive, ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useNotificationStore } from '../store/notification'
-import { productApi, favoriteApi } from '../services/api'
+import { productApi, favoriteApi, postApi } from '../services/api'
 import { useToast } from '../use/useToast'
 import PublishActionSheet from './PublishActionSheet.vue'
 
@@ -167,12 +166,17 @@ watch(() => props.visible, async (newVal) => {
 
 async function fetchStats() {
   try {
-    const [myProductsRes, favCountRes] = await Promise.allSettled([
+    const [myProductsRes, favCountRes, myPostsRes] = await Promise.allSettled([
       productApi.getMyProducts(),
-      favoriteApi.getFavoriteCount()
+      favoriteApi.getFavoriteCount(),
+      postApi.getUserPosts(currentUser.value?.id)
     ])
     if (myProductsRes.status === 'fulfilled' && myProductsRes.value?.code === 200) {
       stats.published = (myProductsRes.value.data || []).length
+    }
+    // 统计用户发布的帖子数量，累加到发布数
+    if (myPostsRes.status === 'fulfilled' && myPostsRes.value?.code === 200) {
+      stats.published += (myPostsRes.value.data || []).length
     }
     if (favCountRes.status === 'fulfilled' && favCountRes.value?.code === 200) {
       stats.favorites = favCountRes.value.data || 0

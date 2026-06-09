@@ -12,8 +12,12 @@
 
     <main class="main-content">
       <div class="fav-tabs">
-        <button :class="{ active: activeType === 'PRODUCT' }" @click="switchType('PRODUCT')">商品收藏</button>
-        <button :class="{ active: activeType === 'POST' }" @click="switchType('POST')">帖子收藏</button>
+        <button :class="{ active: activeType === 'PRODUCT' }" @click="switchType('PRODUCT')">
+          商品收藏<span v-if="productCount > 0"> ({{ productCount }})</span>
+        </button>
+        <button :class="{ active: activeType === 'POST' }" @click="switchType('POST')">
+          帖子收藏<span v-if="postCount > 0"> ({{ postCount }})</span>
+        </button>
       </div>
       <div v-if="loading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -108,6 +112,8 @@ const total = ref(0)
 const loading = ref(true)
 const error = ref('')
 const activeType = ref('PRODUCT')
+const productCount = ref(0)
+const postCount = ref(0)
 
 function getPostTypeText(postType) {
   const map = { DISCUSSION: '讨论', SHOWCASE: '展示', HELP: '求助', ACTIVITY: '活动' }
@@ -186,13 +192,28 @@ async function loadFavorites() {
 
 onMounted(() => {
   loadFavorites()
+  loadCounts()
 })
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     loadFavorites()
+    loadCounts()
   }
 })
+
+/** 加载收藏分类统计（商品数 + 帖子数） */
+async function loadCounts() {
+  try {
+    const res = await favoriteApi.getFavoriteCounts()
+    if (res.code === 200 && res.data) {
+      productCount.value = res.data.productCount || 0
+      postCount.value = res.data.postCount || 0
+    }
+  } catch (e) {
+    // 静默失败，不影响主流程
+  }
+}
 </script>
 
 <style scoped>

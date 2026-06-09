@@ -131,4 +131,15 @@ public class FavoriteController {
     public Result<Integer> getMyFavoriteCount() {
         return Result.success(favoriteMapper.countByUserId(SecurityUtils.getCurrentUserId()));
     }
+
+    /** 我的收藏分类统计（商品 + 帖子） */
+    @GetMapping("/counts")
+    @Operation(summary = "我的收藏分类统计")
+    public Result<Map<String, Integer>> getFavoriteCounts() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Map<String, Integer> counts = new HashMap<>();
+        counts.put("productCount", favoriteMapper.countByUserIdAndType(userId, "PRODUCT"));
+        counts.put("postCount", favoriteMapper.countByUserIdAndType(userId, "POST"));
+        return Result.success(counts);
+    }
 }

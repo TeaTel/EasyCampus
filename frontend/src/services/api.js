@@ -317,6 +317,10 @@ export const favoriteApi = {
 
   getFavoriteCount() {
     return api.get('/v2/favorites/count')
+  },
+
+  getFavoriteCounts() {
+    return api.get('/v2/favorites/counts')
   }
 }
 
