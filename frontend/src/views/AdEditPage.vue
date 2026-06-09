@@ -229,7 +229,7 @@ async function submitAd() {
       content: content.value.trim(),
       imageUrls: imageUrls.value.length > 0 ? imageUrls.value : null,
       coverImage: imageUrls.value.length > 0 ? imageUrls.value[0] : null,
-      tags: tags.value.length > 0 ? tags.value : null,
+      tags: tags.value.length > 0 ? tags.value.join(',') : null,
       packageId: selectedPackage.value,
       postType: postType.value
     })
@@ -240,7 +240,8 @@ async function submitAd() {
       error.value = res.message || '发布失败'
     }
   } catch (e) {
-    error.value = '发布失败，请检查网络连接'
+    // 优先显示 API 返回的具体错误消息，兜底显示网络连接提示
+    error.value = e?.message || '发布失败，请检查网络连接'
   } finally {
     submitting.value = false
   }
@@ -262,7 +263,7 @@ async function confirmPay() {
       error.value = res.message || '支付失败'
     }
   } catch (e) {
-    error.value = '支付失败，请重试'
+    error.value = e?.message || '支付失败，请重试'
   } finally {
     paying.value = false
   }
