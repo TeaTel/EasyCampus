@@ -38,7 +38,7 @@
         </div>
 
         <nav v-if="isAuthenticated" class="menu-list">
-          <div class="menu-item highlight" @click="showPublishSheet = true">
+          <div class="menu-item highlight" @click="handlePublishClick">
             <span class="menu-icon">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </span>
@@ -182,6 +182,7 @@ async function fetchStats() {
   }
 }
 
+function handlePublishClick() { emit('close'); showPublishSheet.value = true }
 function goProfile() { emit('close'); router.push('/profile') }
 function goLogin() { emit('close'); router.push('/login') }
 function goRoute(path) { emit('close'); router.push(path) }
