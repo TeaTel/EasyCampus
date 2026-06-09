@@ -102,20 +102,6 @@
           注册账号
         </button>
 
-        <div class="divider">
-          <span>其他登录方式</span>
-        </div>
-
-        <div class="social-login">
-          <button type="button" class="social-btn wechat" title="微信登录" @click="handleWechatLogin">
-            <svg viewBox="0 0 24 24" fill="#07C160" width="24" height="24">
-              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.118-.038-.177l-.327-1.233a.582.582 0 01.176-.554C23.438 18.142 24 16.494 24 14.694c0-3.442-3.155-6.282-7.062-6.836zm-2.821 2.571c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.982.969-.982z"/>
-            </svg>
-          </button>
-          <button type="button" class="social-btn student" title="校园认证" @click="handleCampusAuth">
-            <span>📚</span>
-          </button>
-        </div>
       </form>
 
       <p class="register-link">
@@ -131,12 +117,10 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { userApi } from '../services/api'
-import { useToast } from '../use/useToast'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const toast = useToast()
 
 const form = ref({
   username: '',
@@ -160,14 +144,6 @@ const isFormValid = computed(() => {
 function goRegister() {
   if (loading.value) return
   router.push('/register')
-}
-
-function handleWechatLogin() {
-  toast.showToast('微信登录即将上线，敬请期待', 'info')
-}
-
-function handleCampusAuth() {
-  toast.showToast('校园认证功能开发中', 'info')
 }
 
 async function handleLogin() {
@@ -556,66 +532,6 @@ async function handleLogin() {
   color: var(--color-rose-500);
   font-size: var(--text-sm);
   text-align: center;
-}
-
-.divider {
-  position: relative;
-  margin: var(--space-8) 0 var(--space-5);
-  text-align: center;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background-color: var(--color-border-light);
-}
-
-.divider::before { left: 0; }
-.divider::after { right: 0; }
-
-.divider span {
-  position: relative;
-  padding: 0 var(--space-3);
-  background-color: var(--color-bg-primary);
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-
-.social-login {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-6);
-}
-
-.social-btn {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
-  background-color: var(--color-bg-primary);
-}
-
-.social-btn:hover {
-  border-color: var(--color-primary-300);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-2px);
-}
-
-.social-btn:active {
-  transform: scale(0.95);
-}
-
-.social-btn span {
-  font-size: 24px;
 }
 
 .register-link {
