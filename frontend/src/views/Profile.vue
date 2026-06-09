@@ -22,6 +22,14 @@
           </div>
           <h2 class="user-name">{{ userInfo.nickname || userInfo.username || '未设置昵称' }}</h2>
           <p class="user-id">ID: {{ userInfo.id || '---' }}</p>
+          <div v-if="myOrgs.length > 0" class="user-orgs">
+            <span
+              v-for="org in myOrgs"
+              :key="org.id"
+              class="org-tag"
+              @click="router.push(`/orgs/${org.id}`)"
+            >{{ org.name }}</span>
+          </div>
           <p v-if="userInfo.bio" class="user-bio">{{ userInfo.bio }}</p>
 
           <div class="stats-row">
@@ -284,7 +292,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { productApi, postApi, favoriteApi, uploadApi, userApi, followApi } from '../services/api'
+import { productApi, postApi, favoriteApi, uploadApi, userApi, followApi, organizationApi } from '../services/api'
 import { useAuthStore } from '../store/auth'
 import { useToast } from '../use/useToast'
 import PublishActionSheet from '../components/PublishActionSheet.vue'
@@ -319,6 +327,8 @@ const stats = reactive({
   followers: 0
 })
 
+const myOrgs = ref([])
+
 const statsLoading = ref(true)
 const showAbout = ref(false)
 const showLogoutConfirm = ref(false)
@@ -336,6 +346,7 @@ onMounted(async () => {
   if (authStore.isAuthenticated.value) {
     await fetchUserInfo()
     await fetchStats()
+    fetchMyOrgs()
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
 })
@@ -348,6 +359,7 @@ watch(() => authStore.isAuthenticated.value, async (val) => {
   if (val) {
     await fetchUserInfo()
     await fetchStats()
+    fetchMyOrgs()
   }
 })
 
@@ -356,6 +368,18 @@ async function fetchUserInfo() {
     await authStore.fetchUserInfo()
   } catch (error) {
     console.error('获取用户信息失败:', error)
+  }
+}
+
+/** 获取当前用户已加入的组织列表 */
+async function fetchMyOrgs() {
+  try {
+    const res = await organizationApi.getMyOrgs()
+    if (res.code === 200 && Array.isArray(res.data)) {
+      myOrgs.value = res.data
+    }
+  } catch (error) {
+    /* 静默失败，组织信息非核心数据 */
   }
 }
 
@@ -563,6 +587,34 @@ function goToRegister() {
   margin: 0 0 var(--space-1);
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
+}
+
+/* 用户已加入的组织标签 */
+.user-orgs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.org-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-primary-600);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.org-tag:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  border-color: var(--color-primary-300);
 }
 
 .user-bio {

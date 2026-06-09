@@ -11,6 +11,13 @@
             <div class="user-info">
               <span class="user-name">{{ currentUser?.nickname || currentUser?.username || '用户' }}</span>
               <span class="user-sub">{{ currentUser?.school || '校园集市' }}</span>
+              <span v-if="displayOrgs.list.length > 0" class="user-orgs">
+                <span v-for="(org, index) in displayOrgs.list" :key="org.id">
+                  <span class="org-name">{{ org.name }}</span>
+                  <span v-if="index < displayOrgs.list.length - 1 || displayOrgs.overflow > 0" class="org-sep">·</span>
+                </span>
+                <span v-if="displayOrgs.overflow > 0" class="org-more">+{{ displayOrgs.overflow }}</span>
+              </span>
             </div>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
           </div>
@@ -128,7 +135,7 @@ import { reactive, ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useNotificationStore } from '../store/notification'
-import { productApi, favoriteApi, postApi } from '../services/api'
+import { productApi, favoriteApi, postApi, organizationApi } from '../services/api'
 import { useToast } from '../use/useToast'
 import PublishActionSheet from './PublishActionSheet.vue'
 
@@ -148,10 +155,26 @@ const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="ht
 
 const stats = reactive({ published: 0, favorites: 0 })
 const showPublishSheet = ref(false)
+const myOrgs = ref([])
+
+/** 最多显示的组织数量 */
+const MAX_DISPLAY_ORGS = 3
+
+/** 计算需要显示的组织名列表和超出数量 */
+const displayOrgs = computed(() => {
+  if (myOrgs.value.length <= MAX_DISPLAY_ORGS) {
+    return { list: myOrgs.value, overflow: 0 }
+  }
+  return {
+    list: myOrgs.value.slice(0, MAX_DISPLAY_ORGS),
+    overflow: myOrgs.value.length - MAX_DISPLAY_ORGS
+  }
+})
 
 watch(() => props.visible, async (newVal) => {
   if (newVal && isAuthenticated.value) {
     await fetchStats()
+    fetchMyOrgs()
   }
 })
 
@@ -174,6 +197,18 @@ async function fetchStats() {
     }
   } catch (e) {
     console.error('获取统计数据失败:', e)
+  }
+}
+
+/** 获取当前用户已加入的组织列表 */
+async function fetchMyOrgs() {
+  try {
+    const res = await organizationApi.getMyOrgs()
+    if (res.code === 200 && Array.isArray(res.data)) {
+      myOrgs.value = res.data
+    }
+  } catch (error) {
+    /* 静默失败，组织信息非核心数据 */
   }
 }
 
@@ -216,6 +251,30 @@ function onAvatarError(e) { e.target.src = defaultAvatar }
 .user-info { flex: 1; min-width: 0; }
 .user-name { display: block; font-size: 17px; font-weight: 700; color: #333; }
 .user-sub { display: block; font-size: 12px; color: #999; margin-top: 2px; }
+
+/* 侧边栏用户组织名显示 */
+.user-orgs {
+  display: block;
+  font-size: 11px;
+  color: var(--color-primary-500, #10b981);
+  margin-top: 1px;
+  line-height: 1.4;
+}
+
+.org-name {
+  font-weight: 500;
+}
+
+.org-sep {
+  color: #ccc;
+  margin: 0 2px;
+  font-weight: 400;
+}
+
+.org-more {
+  font-weight: 500;
+  color: var(--color-primary-500, #10b981);
+}
 .user-section-guest {
   display: flex; align-items: center; gap: 12px;
 }
