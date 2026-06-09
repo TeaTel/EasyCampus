@@ -10,7 +10,7 @@
             <img :src="currentUser?.avatar || defaultAvatar" class="user-avatar" @error="onAvatarError" />
             <div class="user-info">
               <span class="user-name">{{ currentUser?.nickname || currentUser?.username || '用户' }}</span>
-              <span class="user-sub">{{ currentUser?.school || '校园集市' }}</span>
+              <span class="user-sub">{{ currentUser?.school || '易校EasyCampus' }}</span>
               <span v-if="displayOrgs.list.length > 0" class="user-orgs">
                 <span v-for="(org, index) in displayOrgs.list" :key="org.id">
                   <span class="org-name">{{ org.name }}</span>
@@ -219,7 +219,7 @@ function handlePublishClick() { emit('close'); showPublishSheet.value = true }
 function goProfile() { emit('close'); router.push('/profile') }
 function goLogin() { emit('close'); router.push('/login') }
 function goRoute(path) { emit('close'); router.push(path) }
-function handleAbout() { emit('close'); toast.showToast('校园二手交易平台 v2.0 —— 让每一件闲置都有归宿') }
+function handleAbout() { emit('close'); toast.showToast('易校EasyCampus v2.0 —— 让每一件闲置都有归宿') }
 function handleLogout() { emit('close'); store.logout() }
 function onAvatarError(e) { e.target.src = defaultAvatar }
 </script>

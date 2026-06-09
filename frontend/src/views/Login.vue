@@ -9,8 +9,8 @@
         <span class="circle circle-5"></span>
       </div>
       <div class="brand-content">
-        <h1 class="brand-title">校园集市</h1>
-        <p class="brand-subtitle">Campus Market</p>
+        <h1 class="brand-title">易校EasyCampus</h1>
+        <p class="brand-subtitle">EasyCampus</p>
         <p class="brand-slogan">让闲置流动起来，让校园更精彩</p>
       </div>
     </div>

@@ -264,8 +264,8 @@ const publicPaths = ['/', '/login', '/register', '/forgot-password', '/db-test',
 router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title
-    ? `${to.meta.title} - 校园二手`
-    : '校园二手交易平台'
+    ? `${to.meta.title} - 易校EasyCampus`
+    : '易校EasyCampus'
 
   // 检查当前路径是否在白名单中
   const isPublicPath = publicPaths.some(path => {

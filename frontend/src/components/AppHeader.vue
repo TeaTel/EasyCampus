@@ -29,9 +29,9 @@
           </template>
         </div>
         <router-link to="/" class="logo-link">
-          <span class="logo-text hide-on-mobile">校园集市</span>
-          <span class="logo-text hide-on-desktop">集市</span>
-          <span class="logo-sub hide-on-mobile">Campus Market</span>
+          <span class="logo-text hide-on-mobile">易校EasyCampus</span>
+          <span class="logo-text hide-on-desktop">易校</span>
+          <span class="logo-sub hide-on-mobile">EasyCampus</span>
         </router-link>
       </div>
 

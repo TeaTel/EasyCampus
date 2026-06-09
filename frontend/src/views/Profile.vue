@@ -86,7 +86,7 @@
                 </defs>
               </svg>
             </div>
-            <h2 class="auth-title">校园集市</h2>
+            <h2 class="auth-title">易校EasyCampus</h2>
             <p class="auth-desc">登录你的账号，开启校园闲置交易之旅</p>
             <div class="auth-actions">
               <button @click="goToLogin" class="auth-btn login-btn">登录</button>
@@ -195,7 +195,7 @@
           </div>
         </section>
 
-        <p class="version-info">校园二手 v1.0.0</p>
+        <p class="version-info">易校EasyCampus v1.0.0</p>
       </main>
     </div>
 
@@ -236,7 +236,7 @@
               </defs>
             </svg>
           </div>
-          <h2 class="about-title">校园二手交易平台</h2>
+          <h2 class="about-title">易校EasyCampus</h2>
           <p class="about-version">版本 1.0.0</p>
           <div class="about-desc">
             <p>一个专为高校学生打造的二手物品交易平台，让闲置物品流转起来，倡导绿色环保的校园生活方式。</p>
