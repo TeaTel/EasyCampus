@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -35,16 +37,17 @@ public class UserServiceImpl implements UserService {
     private final VerificationCodeMapper verificationCodeMapper;
     private final JavaMailSender mailSender;
 
+    /** 发送验证码频率限制：记录每个账号上次发送时间，防止短时间内重复发送 */
+    private final Map<String, Long> resetCodeSendTimestamps = new ConcurrentHashMap<>();
+    /** 同一账号两次发送验证码的最小间隔（毫秒） */
+    private static final long RESET_CODE_INTERVAL_MS = 60_000L;
+
     @Override
     @Transactional
     public UserVO register(UserRegisterDTO dto) {
         // 检查用户名是否已存在
         if (userMapper.selectByUsername(dto.getUsername()) != null) {
             throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "用户名已存在");
-        }
-        // 检查手机号
-        if (userMapper.selectByPhone(dto.getPhone()) != null) {
-            throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "手机号已注册");
         }
 
         User user = new User();
@@ -124,11 +127,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void sendResetCode(String account) {
-        // 查找用户，支持用户名、手机号、邮箱
-        User user = userMapper.selectByUsername(account);
-        if (user == null) {
-            user = userMapper.selectByPhone(account);
+        // 频率限制：同一账号60秒内只能发送一次验证码
+        Long lastTimestamp = resetCodeSendTimestamps.get(account);
+        long now = System.currentTimeMillis();
+        if (lastTimestamp != null && (now - lastTimestamp) < RESET_CODE_INTERVAL_MS) {
+            long remainingSeconds = (RESET_CODE_INTERVAL_MS - (now - lastTimestamp)) / 1000 + 1;
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "操作太频繁，请" + remainingSeconds + "秒后再试");
         }
+
+        // 查找用户，支持用户名或邮箱
+        User user = userMapper.selectByUsername(account);
         if (user == null) {
             user = userMapper.selectByEmail(account);
         }
@@ -136,7 +145,7 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundException("用户", account);
         }
 
-        // 确定接收验证码的邮箱
+        // 获取用户邮箱
         String email = user.getEmail();
         if (email == null || email.trim().isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "该用户未设置邮箱，无法发送验证码");
@@ -153,6 +162,9 @@ public class UserServiceImpl implements UserService {
         verificationCode.setExpireAt(LocalDateTime.now().plusMinutes(5));
         verificationCodeMapper.insert(verificationCode);
 
+        // 记录发送时间戳，用于频率限制
+        resetCodeSendTimestamps.put(account, now);
+
         // 发送验证码邮件
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -162,6 +174,8 @@ public class UserServiceImpl implements UserService {
             mailSender.send(message);
             log.info("密码重置验证码已发送: email={}", email);
         } catch (Exception e) {
+            // 邮件发送失败时清除时间戳限制，允许用户重试
+            resetCodeSendTimestamps.remove(account);
             log.error("验证码邮件发送失败: email={}, error={}", email, e.getMessage());
             throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR, "验证码发送失败，请稍后重试");
         }
@@ -170,11 +184,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void verifyAndResetPassword(String account, String verifyCode, String newPassword) {
-        // 查找用户
+        // 查找用户，支持用户名或邮箱
         User user = userMapper.selectByUsername(account);
-        if (user == null) {
-            user = userMapper.selectByPhone(account);
-        }
         if (user == null) {
             user = userMapper.selectByEmail(account);
         }

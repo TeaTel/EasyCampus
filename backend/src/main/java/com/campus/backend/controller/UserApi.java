@@ -94,7 +94,7 @@ public class UserApi {
     public Result<Void> sendResetCode(@RequestBody Map<String, String> body) {
         String account = body.get("account");
         if (account == null || account.trim().isEmpty()) {
-            return Result.error("请提供邮箱或手机号");
+            return Result.error("请提供用户名或邮箱");
         }
         userService.sendResetCode(account);
         return Result.success("验证码已发送");

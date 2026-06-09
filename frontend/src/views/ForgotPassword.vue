@@ -10,11 +10,11 @@
     </div>
 
     <div class="content-container">
-      <!-- 步骤1：输入邮箱/手机号 -->
+      <!-- 步骤1：输入绑定邮箱 -->
       <div v-if="step === 1" class="step-content">
         <div class="step-icon">📧</div>
         <h3 class="step-title">验证身份</h3>
-        <p class="step-desc">请输入注册时使用的邮箱或手机号</p>
+        <p class="step-desc">请输入注册时绑定的邮箱地址</p>
 
         <form @submit.prevent="handleSendCode" class="form-group">
           <div class="input-group">
@@ -26,7 +26,7 @@
               <input
                 type="text"
                 v-model="account"
-                placeholder="邮箱或手机号"
+                placeholder="请输入绑定的邮箱地址"
                 @focus="inputFocused = true"
                 @blur="inputFocused = false"
               />

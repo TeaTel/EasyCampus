@@ -23,7 +23,7 @@
             <input
               type="text"
               v-model="form.username"
-              placeholder="学号/手机号"
+              placeholder="自定义账号（4-20位）"
               @focus="focusState.username = true"
               @blur="focusState.username = false"
             />
@@ -57,7 +57,7 @@
             <input
               type="email"
               v-model="form.email"
-              placeholder="校园邮箱（选填）"
+              placeholder="校园邮箱（必填）"
               @focus="focusState.email = true"
               @blur="focusState.email = false"
             />
@@ -203,10 +203,16 @@ const focusState = ref({
   confirmPwd: false
 })
 
+// 邮箱格式简单校验：必须包含 @ 和 .
+function isValidEmail(email) {
+  return email && email.includes('@') && email.includes('.')
+}
+
 const isFormValid = computed(() => {
   return (
     form.value.username.trim().length >= 4 &&
     form.value.nickname.trim().length >= 2 &&
+    isValidEmail(form.value.email) &&
     form.value.password.length >= 6 &&
     form.value.password === form.value.confirmPassword &&
     agreeTerms.value
@@ -228,7 +234,7 @@ async function handleRegister() {
     const result = await authStore.register({
       username: form.value.username,
       nickname: form.value.nickname,
-      email: form.value.email || undefined,
+      email: form.value.email,
       password: form.value.password
     })
 
