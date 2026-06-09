@@ -8,44 +8,73 @@
       </div>
     </div>
 
-    <section v-if="!isMobile" class="banner-section" @wheel.prevent="onBannerWheel">
-      <div class="banner-track"
-        :style="{ transform: `translateX(-${displayIndex * 100}%)`, transition: isWrapping ? 'none' : undefined }"
-        @transitionend="onTrackTransitionEnd">
-        <div
-          v-for="(banner, index) in displayBanners"
-          :key="index"
-          class="banner-slide"
-          :class="'banner-slide--' + (index % 3)"
-        >
-          <div class="banner-content">
-            <div v-if="banner.isAd" class="banner-ad-badge">推广</div>
-            <h2 class="banner-title">{{ banner.title }}</h2>
-            <p class="banner-subtitle">{{ banner.subtitle }}</p>
-            <button class="banner-cta" @click="handleBannerCta(banner)">{{ banner.cta }}</button>
-          </div>
-          <div class="banner-decoration">
-            <div class="banner-circle banner-circle--1"></div>
-            <div class="banner-circle banner-circle--2"></div>
-            <div class="banner-circle banner-circle--3"></div>
+    <section v-if="banners.length > 0" class="banner-section" :class="{ 'banner-desktop': !isMobile, 'banner-mobile': isMobile }" @wheel.prevent="!isMobile && onBannerWheel">
+      <!-- 桌面端：无限循环轮播 -->
+      <template v-if="!isMobile">
+        <div class="banner-track"
+          :style="{ transform: `translateX(-${displayIndex * 100}%)`, transition: isWrapping ? 'none' : undefined }"
+          @transitionend="onTrackTransitionEnd">
+          <div
+            v-for="(banner, index) in displayBanners"
+            :key="index"
+            class="banner-slide"
+          >
+            <img
+              v-if="banner.coverImage"
+              :src="banner.coverImage"
+              class="banner-cover"
+              @error="onCoverError"
+              alt=""
+            />
+            <div class="banner-content">
+              <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
+              <h2 class="banner-title">{{ banner.title }}</h2>
+              <p class="banner-subtitle">{{ banner.subtitle }}</p>
+              <button class="banner-cta" @click="handleBannerCta(banner)">{{ banner.cta }}</button>
+            </div>
           </div>
         </div>
-      </div>
-      <button class="banner-arrow banner-arrow--prev" @click="slideBackward">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button class="banner-arrow banner-arrow--next" @click="slideForward">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <div class="banner-dots">
-        <span
-          v-for="(_, index) in banners"
-          :key="index"
-          class="banner-dot"
-          :class="{ active: normalizedBanner === index }"
-          @click="goToBanner(index)"
-        ></span>
-      </div>
+        <button v-if="banners.length > 1" class="banner-arrow banner-arrow--prev" @click="slideBackward">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button v-if="banners.length > 1" class="banner-arrow banner-arrow--next" @click="slideForward">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div v-if="banners.length > 1" class="banner-dots">
+          <span
+            v-for="(_, index) in banners"
+            :key="index"
+            class="banner-dot"
+            :class="{ active: normalizedBanner === index }"
+            @click="goToBanner(index)"
+          ></span>
+        </div>
+      </template>
+
+      <!-- 移动端：横向滑动卡片 -->
+      <template v-if="isMobile">
+        <div class="mobile-banner-scroll">
+          <div
+            v-for="(banner, index) in banners"
+            :key="index"
+            class="mobile-banner-card"
+            @click="handleBannerCta(banner)"
+          >
+            <img
+              v-if="banner.coverImage"
+              :src="banner.coverImage"
+              class="mobile-banner-cover"
+              @error="onCoverError"
+              alt=""
+            />
+            <div class="mobile-banner-overlay">
+              <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
+              <h3 class="mobile-banner-title">{{ banner.title }}</h3>
+              <p class="mobile-banner-subtitle">{{ banner.subtitle }}</p>
+            </div>
+          </div>
+        </div>
+      </template>
     </section>
 
     <main class="feed-content">
@@ -174,27 +203,18 @@ const authStore = useAuthStore()
 
 const activeTab = ref(route.query.tab || 'discover')
 
-const staticBanners = [
-  { title: '校园好物 等你来淘', subtitle: '发现身边的优质二手好物', cta: '立即探索', route: '/products', isAd: false },
-  { title: '发布闲置 轻松变现', subtitle: '把不用的东西变成零花钱', cta: '马上发布', route: '/products/create', isAd: false },
-  { title: '社区动态 精彩不断', subtitle: '关注同学 分享校园生活', cta: '去看看', route: '/community', isAd: false }
-]
-
 const adBanners = ref([])
 const banners = computed(() => {
-  // 广告帖子转换为 banner 格式，插在第一条静态 banner 之后
-  const adItems = adBanners.value.map(ad => ({
+  // 广告帖子转换为 banner 格式
+  return adBanners.value.map(ad => ({
     title: ad.title || '推广内容',
     subtitle: (ad.content || '').replace(/<[^>]+>/g, '').substring(0, 30),
     cta: '查看详情',
     route: `/community/posts/${ad.id}`,
     isAd: true,
-    postId: ad.id
+    postId: ad.id,
+    coverImage: ad.coverImage || null
   }))
-  const merged = [...staticBanners.slice(0, 1)]
-  merged.push(...adItems)
-  merged.push(...staticBanners.slice(1))
-  return merged
 })
 
 let bannerTimer = null
@@ -529,6 +549,13 @@ function handleBannerCta(banner) {
   }
 }
 
+/** 封面图加载失败时隐藏 img 元素，露出 fallback 渐变背景 */
+function onCoverError(e) {
+  if (e.target) {
+    e.target.style.display = 'none'
+  }
+}
+
 function goToLogin() {
   router.push({ path: '/login', query: { redirect: '/' } })
 }
@@ -593,24 +620,29 @@ function trackBehavior(targetType, targetId) {
   align-items: center;
   padding: var(--space-12, 3rem) var(--space-16, 4rem);
   overflow: hidden;
-}
-
-.banner-slide--0 {
+  /* 默认渐变背景，作为封面图加载失败或无封面时的 fallback */
   background: linear-gradient(135deg, #059669 0%, #10b981 40%, #34d399 100%);
 }
 
-.banner-slide--1 {
-  background: linear-gradient(135deg, #047857 0%, #059669 40%, #10b981 100%);
+/* 封面图：绝对定位铺满 slide */
+.banner-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
 }
 
-.banner-slide--2 {
-  background: linear-gradient(135deg, #065f46 0%, #047857 40%, #059669 100%);
-}
-
+/* 文字区域：仅在底部加半透遮罩确保文字可读，不覆盖整张图 */
 .banner-content {
   position: relative;
   z-index: 2;
   max-width: 520px;
+  padding: var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 12px);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.15) 60%, transparent 100%);
 }
 
 .banner-title {
@@ -667,54 +699,6 @@ function trackBehavior(targetType, targetId) {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.banner-decoration {
-  position: absolute;
-  right: -40px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 400px;
-  height: 400px;
-  z-index: 1;
-}
-
-.banner-circle {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-}
-
-.banner-circle--1 {
-  width: 300px;
-  height: 300px;
-  top: 50px;
-  right: 50px;
-  background: rgba(255, 255, 255, 0.06);
-  animation: float 6s ease-in-out infinite;
-}
-
-.banner-circle--2 {
-  width: 180px;
-  height: 180px;
-  top: 20px;
-  right: 180px;
-  background: rgba(255, 255, 255, 0.08);
-  animation: float 5s ease-in-out infinite 1s;
-}
-
-.banner-circle--3 {
-  width: 100px;
-  height: 100px;
-  bottom: 40px;
-  right: 100px;
-  background: rgba(255, 255, 255, 0.1);
-  animation: float 4s ease-in-out infinite 0.5s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-
 .banner-arrow {
   position: absolute;
   top: 50%;
@@ -769,6 +753,95 @@ function trackBehavior(targetType, targetId) {
   width: 24px;
   background: #ffffff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* ===== 移动端 Banner：横向滑动卡片 ===== */
+.banner-mobile {
+  aspect-ratio: auto;
+  min-height: 160px;
+  max-height: 200px;
+  border-radius: 0;
+  cursor: default;
+  background: transparent;
+}
+
+.banner-mobile .banner-track {
+  display: none; /* 隐藏桌面端的 track */
+}
+
+.mobile-banner-scroll {
+  display: flex;
+  gap: var(--space-3, 0.75rem);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+}
+.mobile-banner-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-banner-card {
+  position: relative;
+  flex-shrink: 0;
+  width: 80vw;
+  max-width: 320px;
+  height: 160px;
+  border-radius: var(--radius-xl, 14px);
+  overflow: hidden;
+  scroll-snap-align: start;
+  cursor: pointer;
+  /* fallback 渐变背景 */
+  background: linear-gradient(135deg, #059669 0%, #10b981 40%, #34d399 100%);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+.mobile-banner-card:active {
+  transform: scale(0.97);
+}
+
+.mobile-banner-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.mobile-banner-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: var(--space-5, 1.25rem) var(--space-3, 0.75rem) var(--space-3, 0.75rem);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.1) 70%, transparent 100%);
+}
+
+.mobile-banner-title {
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-size: var(--text-base, 0.9375rem);
+  font-weight: var(--font-bold, 700);
+  color: #ffffff;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mobile-banner-subtitle {
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgba(255, 255, 255, 0.75);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .feed-content {
