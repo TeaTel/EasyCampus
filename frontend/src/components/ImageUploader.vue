@@ -77,6 +77,13 @@ import { uploadApi } from '../services/api'
 
 const CHUNK_THRESHOLD = 5 * 1024 * 1024 // 超过5MB启用分片上传
 const CHUNK_SIZE = 2 * 1024 * 1024 // 每个分片2MB
+const CHUNK_CONCURRENCY = 3 // 分片并发上传数
+
+// 客户端压缩配置（在上传前缩小图片体积，大幅减少上传时间）
+const COMPRESS_MAX_WIDTH = 1920 // 压缩后最大宽度
+const COMPRESS_MAX_HEIGHT = 1920 // 压缩后最大高度
+const COMPRESS_QUALITY = 0.75 // JPEG压缩质量（0-1）
+const COMPRESS_MIN_SIZE = 300 * 1024 // 小于此大小的图片不压缩（300KB）
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
@@ -117,8 +124,79 @@ function emitUrls() {
   emit('update:modelValue', urls)
 }
 
+// 计算缩放后尺寸（保持宽高比）
+function calculateCompressSize(srcWidth, srcHeight) {
+  let width = srcWidth
+  let height = srcHeight
+  if (width > COMPRESS_MAX_WIDTH) {
+    height = Math.round(height * COMPRESS_MAX_WIDTH / width)
+    width = COMPRESS_MAX_WIDTH
+  }
+  if (height > COMPRESS_MAX_HEIGHT) {
+    width = Math.round(width * COMPRESS_MAX_HEIGHT / height)
+    height = COMPRESS_MAX_HEIGHT
+  }
+  return { width, height }
+}
+
+// 客户端 Canvas 压缩图片（缩放 + 质量压缩），减少上传体积
+// 返回压缩后的 File 对象，压缩失败时返回原文件
+async function compressImageBeforeUpload(file) {
+  // 小图片或非图片文件不压缩
+  if (file.size < COMPRESS_MIN_SIZE || !file.type.startsWith('image/')) {
+    return file
+  }
+
+  return new Promise((resolve) => {
+    const imageUrl = URL.createObjectURL(file)
+    const img = new Image()
+
+    img.onload = () => {
+      URL.revokeObjectURL(imageUrl)
+
+      // 原图尺寸已经很小，直接返回原文件
+      if (img.width <= COMPRESS_MAX_WIDTH && img.height <= COMPRESS_MAX_HEIGHT && file.size < COMPRESS_MIN_SIZE * 2) {
+        resolve(file)
+        return
+      }
+
+      const { width, height } = calculateCompressSize(img.width, img.height)
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      // 白色背景（处理PNG透明图转为JPEG时背景变黑的问题）
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, width, height)
+      ctx.drawImage(img, 0, 0, width, height)
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          // Canvas 导出失败（极少情况），使用原文件
+          resolve(file)
+          return
+        }
+        // 创建新 File 对象，统一转为 JPEG 以获得最大压缩
+        const newName = file.name.replace(/\.[^.]+$/, '.jpg')
+        const compressedFile = new File([blob], newName, {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        })
+        resolve(compressedFile)
+      }, 'image/jpeg', COMPRESS_QUALITY)
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(imageUrl)
+      resolve(file) // 加载失败时使用原文件
+    }
+
+    img.src = imageUrl
+  })
+}
+
 // 文件选择处理
-function handleFileSelect(e) {
+async function handleFileSelect(e) {
   const files = Array.from(e.target.files)
   const allowedTypes = props.accept.split(',')
   const maxSizeBytes = props.maxSize * 1024 * 1024
@@ -146,9 +224,11 @@ function handleFileSelect(e) {
       continue
     }
 
-    const img = createImageItem(file)
-    // 生成本地预览
-    img.preview = URL.createObjectURL(file)
+    // 客户端压缩图片，大幅减少上传体积
+    const compressedFile = await compressImageBeforeUpload(file)
+    const img = createImageItem(compressedFile)
+    // 生成本地预览（用压缩后的文件生成 blob URL）
+    img.preview = URL.createObjectURL(compressedFile)
     imageList.value.push(img)
 
     if (props.autoUpload) {
@@ -222,26 +302,45 @@ async function uploadSingleImage(img, idx) {
   checkAllUploaded()
 }
 
-// 分片上传
+// 分片上传（并发上传多个分片，加快大文件上传速度）
 async function uploadWithChunks(file, onProgress) {
   const fileId = generateFileId()
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+  let completedChunks = 0
 
+  // 构建所有分片任务
+  const tasks = []
   for (let i = 0; i < totalChunks; i++) {
     const start = i * CHUNK_SIZE
     const end = Math.min(start + CHUNK_SIZE, file.size)
     const chunk = file.slice(start, end)
-
-    try {
-      await uploadApi.uploadChunk(chunk, fileId, i, totalChunks, file.name)
-    } catch (err) {
-      throw new Error(`分片${i + 1}上传失败: ${getErrorMessage(err)}`)
-    }
-
-    // 更新进度
-    const progress = Math.round(((i + 1) / totalChunks) * 100)
-    onProgress(progress)
+    tasks.push({ chunk, index: i })
   }
+
+  // 带并发控制的分片上传
+  const executing = new Set()
+  for (const task of tasks) {
+    const promise = (async () => {
+      try {
+        await uploadApi.uploadChunk(task.chunk, fileId, task.index, totalChunks, file.name)
+      } catch (err) {
+        throw new Error(`分片${task.index + 1}上传失败: ${getErrorMessage(err)}`)
+      }
+      completedChunks++
+      onProgress(Math.round((completedChunks / totalChunks) * 100))
+    })()
+
+    executing.add(promise)
+    promise.finally(() => executing.delete(promise))
+
+    // 达到并发上限时，等待任一任务完成后再继续
+    if (executing.size >= CHUNK_CONCURRENCY) {
+      await Promise.race(executing)
+    }
+  }
+
+  // 等待剩余任务全部完成
+  await Promise.all(executing)
 
   // 合并分片
   const mergeRes = await uploadApi.mergeChunks(fileId, file.name, totalChunks)
