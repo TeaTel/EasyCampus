@@ -545,7 +545,8 @@ export const activityApi = {
   createActivity(data) { return api.post('/v2/activities', data) },
   getMyActivities(params) { return api.get('/v2/activities/my', { params }) },
   joinActivity(id) { return api.post(`/v2/activities/${id}/join`) },
-  cancelJoin(id) { return api.delete(`/v2/activities/${id}/join`) }
+  cancelJoin(id) { return api.delete(`/v2/activities/${id}/join`) },
+  deleteActivity(id) { return api.delete(`/v2/activities/${id}`) }
 }
 
 // ==================== 商品故事 API ====================

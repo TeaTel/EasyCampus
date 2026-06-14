@@ -99,4 +99,12 @@ public class ActivityController {
         log.info("用户 {} 取消报名活动 {}", userId, id);
         return Result.success(Map.of("joined", false, "message", "已取消报名"));
     }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteActivity(@PathVariable Long id) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        postService.deletePost(id, userId);
+        log.info("用户 {} 删除活动 {}", userId, id);
+        return Result.success(null);
+    }
 }

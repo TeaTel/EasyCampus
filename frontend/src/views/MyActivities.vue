@@ -104,7 +104,10 @@
               </span>
             </div>
           </div>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+          <div class="item-right-actions">
+            <button class="delete-btn" @click.stop="handleDeleteActivity(item)">删除</button>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+          </div>
         </div>
       </div>
 
@@ -114,11 +117,28 @@
         </button>
       </div>
     </div>
+
+    <!-- 删除确认弹窗 -->
+    <Teleport to="body">
+      <div v-if="deleteDialog.visible" class="delete-modal-overlay" @click="cancelDelete">
+        <div class="delete-modal" @click.stop>
+          <div class="modal-icon">⚠️</div>
+          <h3 class="modal-title">确定要删除吗？</h3>
+          <p class="modal-desc">确定要删除活动「{{ deleteDialog.title }}」吗？删除后不可恢复。</p>
+          <div class="modal-actions">
+            <button @click="cancelDelete" class="modal-btn cancel-btn">取消</button>
+            <button @click="confirmDeleteActivity" class="modal-btn confirm-delete-btn" :disabled="deleteDialog.loading">
+              {{ deleteDialog.loading ? '删除中...' : '确定删除' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi } from '../services/api'
 import { useAuthStore } from '../store/auth'
@@ -136,6 +156,14 @@ const page = ref(1)
 const hasMore = ref(false)
 const showCreateForm = ref(false)
 const submitting = ref(false)
+
+// 删除确认弹窗状态
+const deleteDialog = reactive({
+  visible: false,
+  id: null,
+  title: '',
+  loading: false
+})
 
 const form = ref({
   title: '',
@@ -265,6 +293,41 @@ function formatDateTime(d) {
   const h = String(dt.getHours()).padStart(2, '0')
   const m = String(dt.getMinutes()).padStart(2, '0')
   return `${y}年${M}月${day}日 ${h}:${m}`
+}
+
+// 打开删除确认弹窗
+function handleDeleteActivity(item) {
+  deleteDialog.id = item.id
+  deleteDialog.title = item.title
+  deleteDialog.loading = false
+  deleteDialog.visible = true
+}
+
+// 取消删除
+function cancelDelete() {
+  if (deleteDialog.loading) return
+  deleteDialog.visible = false
+}
+
+// 确认删除活动
+async function confirmDeleteActivity() {
+  if (deleteDialog.loading) return
+  deleteDialog.loading = true
+  try {
+    const res = await activityApi.deleteActivity(deleteDialog.id)
+    if (res.code === 200) {
+      // 从列表中移除已删除的活动
+      activities.value = activities.value.filter(a => a.id !== deleteDialog.id)
+      toast.showToast('活动已删除', 'success')
+    } else {
+      toast.showToast(res.message || '删除失败', 'error')
+    }
+  } catch (e) {
+    toast.showToast(e.message || '删除失败，请稍后重试', 'error')
+  } finally {
+    deleteDialog.visible = false
+    deleteDialog.loading = false
+  }
 }
 </script>
 
@@ -410,5 +473,128 @@ function formatDateTime(d) {
 @media (min-width: 768px) {
   .create-form-panel { max-width: 480px; margin: 0 auto; border-radius: 16px; }
   .create-form-overlay { align-items: center; }
+}
+
+/* 列表项右侧操作区域 */
+.item-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delete-btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  background-color: #FFF1F0;
+  color: #FF4D4F;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:active {
+  background-color: #FFCCC7;
+}
+
+/* 删除确认弹窗 */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.delete-modal {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: #999;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: none;
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.cancel-btn:active {
+  background-color: #e8e8e8;
+  transform: scale(0.98);
+}
+
+.confirm-delete-btn {
+  background-color: #FF4D4F;
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.25);
+}
+
+.confirm-delete-btn:active {
+  background-color: #cf1322;
+  transform: scale(0.98);
+}
+
+.confirm-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
