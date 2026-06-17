@@ -14,7 +14,7 @@ public interface OrgMemberMapper {
     @Delete("DELETE FROM org_members WHERE org_id = #{orgId} AND user_id = #{userId}")
     int delete(@Param("orgId") Long orgId, @Param("userId") Long userId);
 
-    @Select("SELECT * FROM org_members WHERE org_id = #{orgId} AND user_id = #{userId}")
+    @Select("SELECT * FROM org_members WHERE org_id = #{orgId} AND user_id = #{userId} LIMIT 1")
     OrgMember selectByOrgAndUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
 
     @Select("SELECT m.id, m.org_id, m.user_id, COALESCE(u.nickname, u.username) as user_name, u.avatar as user_avatar, m.role, m.joined_at " +
