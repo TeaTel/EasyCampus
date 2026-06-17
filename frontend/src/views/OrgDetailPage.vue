@@ -174,7 +174,7 @@ async function removeMem(uid) {
 }
 async function doInvite() {
   if (!inviteUserId.value) return
-  try { await organizationApi.invite(route.params.id, Number(inviteUserId.value)); toast.showToast('邀请已发送', 'success'); inviteUserId.value = '' } catch (e) { toast.showToast('邀请失败', 'error') }
+  try { await organizationApi.invite(route.params.id, Number(inviteUserId.value)); toast.showToast('邀请已发送', 'success'); inviteUserId.value = '' } catch (e) { toast.showToast(e?.message || '邀请失败', 'error') }
 }
 
 async function leaveOrg() {

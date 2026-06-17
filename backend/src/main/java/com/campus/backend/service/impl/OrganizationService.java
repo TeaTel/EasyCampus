@@ -85,9 +85,6 @@ public class OrganizationService {
     @Transactional
     public OrgInvitation inviteMember(Long orgId, Long inviterId, Long inviteeId) {
         Organization org = getOrganization(orgId);
-        if (!"INVITE".equals(org.getJoinType())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "该组织不支持邀请加入模式");
-        }
 
         OrgMember inviter = memberMapper.selectByOrgAndUser(orgId, inviterId);
         if (inviter == null || (!"ADMIN".equals(inviter.getRole()) && !"MODERATOR".equals(inviter.getRole()))) {
