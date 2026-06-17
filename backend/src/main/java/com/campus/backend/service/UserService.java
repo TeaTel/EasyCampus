@@ -52,4 +52,9 @@ public interface UserService {
      * 验证并重置密码（通过邮箱/手机号+验证码）
      */
     void verifyAndResetPassword(String account, String verifyCode, String newPassword);
+
+    /**
+     * 搜索用户（按关键词匹配用户名、昵称、ID）
+     */
+    java.util.List<User> searchUsers(String keyword, int page, int size);
 }

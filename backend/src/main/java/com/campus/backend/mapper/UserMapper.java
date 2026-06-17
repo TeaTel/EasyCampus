@@ -76,7 +76,7 @@ public interface UserMapper {
     @Select("SELECT id FROM users WHERE school = #{school} AND status = 1")
     java.util.List<Long> selectIdsBySchool(String school);
 
-    @Select("SELECT * FROM users WHERE status = 1 AND (username LIKE CONCAT('%', #{keyword}, '%') OR nickname LIKE CONCAT('%', #{keyword}, '%')) ORDER BY created_at DESC LIMIT #{offset}, #{limit}")
+    @Select("SELECT id, nickname, username, avatar FROM users WHERE status = 1 AND (username LIKE CONCAT('%', #{keyword}, '%') OR nickname LIKE CONCAT('%', #{keyword}, '%') OR id = #{keyword}) ORDER BY created_at DESC LIMIT #{offset}, #{limit}")
     java.util.List<User> searchUsers(@Param("keyword") String keyword, @Param("offset") int offset, @Param("limit") int limit);
 
     @Select("SELECT COUNT(*) FROM users WHERE status = 1 AND (username LIKE CONCAT('%', #{keyword}, '%') OR nickname LIKE CONCAT('%', #{keyword}, '%'))")

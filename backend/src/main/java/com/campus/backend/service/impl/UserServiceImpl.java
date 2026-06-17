@@ -234,6 +234,15 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    @Override
+    public java.util.List<User> searchUsers(String keyword, int page, int size) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return java.util.List.of();
+        }
+        int offset = (page - 1) * size;
+        return userMapper.searchUsers(keyword.trim(), offset, size);
+    }
+
     /**
      * Entity -> VO 转换 (排除敏感字段)
      */

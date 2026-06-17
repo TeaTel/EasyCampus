@@ -21,4 +21,7 @@ public interface OrgInvitationMapper {
 
     @Select("SELECT * FROM org_invitations WHERE invitee_id = #{userId} ORDER BY created_at DESC")
     List<OrgInvitation> selectByInviteeId(Long userId);
+
+    @Select("SELECT * FROM org_invitations WHERE org_id = #{orgId} AND invitee_id = #{userId} AND status = 'PENDING' LIMIT 1")
+    OrgInvitation selectPendingByOrgAndUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
 }

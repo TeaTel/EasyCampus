@@ -113,4 +113,13 @@ public class UserApi {
         userService.verifyAndResetPassword(account, verifyCode, newPassword);
         return Result.success("密码重置成功");
     }
+
+    @GetMapping("/search")
+    @Operation(summary = "搜索用户（按ID/账号/昵称）")
+    public Result<java.util.List<com.campus.backend.entity.User>> searchUsers(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Result.success(userService.searchUsers(keyword, page, size));
+    }
 }

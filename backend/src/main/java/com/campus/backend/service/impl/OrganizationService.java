@@ -94,6 +94,10 @@ public class OrganizationService {
         OrgMember existing = memberMapper.selectByOrgAndUser(orgId, inviteeId);
         if (existing != null) throw new BusinessException(ErrorCode.BAD_REQUEST, "该用户已是组织成员");
 
+        // 检查是否已存在待处理的邀请，防止重复发送
+        OrgInvitation pendingInvitation = invitationMapper.selectPendingByOrgAndUser(orgId, inviteeId);
+        if (pendingInvitation != null) throw new BusinessException(ErrorCode.BAD_REQUEST, "已向该用户发送过邀请，请等待处理");
+
         OrgInvitation inv = new OrgInvitation();
         inv.setOrgId(orgId);
         inv.setInviterId(inviterId);
@@ -115,6 +119,13 @@ public class OrganizationService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "此邀请不属于您");
         }
         invitationMapper.respondByCode(inviteCode, "ACCEPTED");
+
+        // 检查是否已是成员，防止重复加入（如接受了同一组织的多个邀请）
+        OrgMember existingMember = memberMapper.selectByOrgAndUser(inv.getOrgId(), userId);
+        if (existingMember != null) {
+            auditLog(inv.getOrgId(), userId, "ACCEPT_INVITE", null, inviteCode + "(已是成员，跳过加入)");
+            return;
+        }
 
         OrgMember member = new OrgMember();
         member.setOrgId(inv.getOrgId());

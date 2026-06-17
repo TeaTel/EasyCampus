@@ -67,9 +67,30 @@
 
         <div v-if="manageTab === 'invite'" class="panel-body">
           <div class="invite-form">
-            <input v-model="inviteUserId" type="number" placeholder="输入要邀请的用户ID" class="form-input" />
+            <div class="search-dropdown">
+              <input
+                v-model="inviteSearchKeyword"
+                type="text"
+                placeholder="输入用户昵称、账号或ID搜索"
+                class="form-input"
+                @input="onInviteSearchInput"
+                @focus="onInviteSearchFocus"
+              />
+              <div v-if="inviteSearchResults.length > 0" class="dropdown-list">
+                <div
+                  v-for="user in inviteSearchResults"
+                  :key="user.id"
+                  class="dropdown-item"
+                  @click="selectInviteUser(user)"
+                >
+                  <span class="user-name">{{ user.nickname || user.username }}</span>
+                  <span class="user-id">ID: {{ user.id }}</span>
+                </div>
+              </div>
+            </div>
             <button class="btn-primary" @click="doInvite" :disabled="!inviteUserId">发送邀请</button>
           </div>
+          <p v-if="invitedUserName" class="invite-target">正在邀请: {{ invitedUserName }}</p>
         </div>
 
         <div v-if="manageTab === 'audit'" class="panel-body">
@@ -86,7 +107,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { organizationApi } from '../services/api'
+import { organizationApi, userApi } from '../services/api'
 import { useToast } from '../use/useToast'
 
 const route = useRoute()
@@ -101,6 +122,10 @@ const pendingRequests = ref([])
 const members = ref([])
 const auditLogs = ref([])
 const inviteUserId = ref('')
+const inviteSearchKeyword = ref('')
+const invitedUserName = ref('')
+const inviteSearchResults = ref([])
+let inviteSearchTimer = null
 const applying = ref(false)
 const leaving = ref(false)
 const hasApplied = ref(false)
@@ -174,7 +199,45 @@ async function removeMem(uid) {
 }
 async function doInvite() {
   if (!inviteUserId.value) return
-  try { await organizationApi.invite(route.params.id, Number(inviteUserId.value)); toast.showToast('邀请已发送', 'success'); inviteUserId.value = '' } catch (e) { toast.showToast(e?.message || '邀请失败', 'error') }
+  try {
+    await organizationApi.invite(route.params.id, Number(inviteUserId.value))
+    toast.showToast('邀请已发送', 'success')
+    inviteUserId.value = ''
+    inviteSearchKeyword.value = ''
+    invitedUserName.value = ''
+    inviteSearchResults.value = []
+  } catch (e) { toast.showToast(e?.message || '邀请失败', 'error') }
+}
+
+// 用户搜索：输入防抖300ms后查询
+function onInviteSearchInput() {
+  clearTimeout(inviteSearchTimer)
+  const keyword = inviteSearchKeyword.value.trim()
+  if (!keyword) {
+    inviteSearchResults.value = []
+    return
+  }
+  inviteSearchTimer = setTimeout(async () => {
+    try {
+      const res = await userApi.searchUsers(keyword)
+      if (res.code === 200 && res.data) {
+        inviteSearchResults.value = res.data
+      }
+    } catch { /* 搜索失败静默处理 */ }
+  }, 300)
+}
+
+function onInviteSearchFocus() {
+  if (inviteSearchKeyword.value.trim()) {
+    onInviteSearchInput()
+  }
+}
+
+function selectInviteUser(user) {
+  inviteUserId.value = String(user.id)
+  invitedUserName.value = user.nickname || user.username || '用户' + user.id
+  inviteSearchKeyword.value = invitedUserName.value
+  inviteSearchResults.value = []
 }
 
 async function leaveOrg() {
@@ -245,7 +308,14 @@ function formatTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
 .role-tag { padding: 2px 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px; color: #666; }
 
 .invite-form { display: flex; gap: 8px; }
-.form-input { flex: 1; padding: 10px 12px; border: 1px solid #DDE1E6; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
+.search-dropdown { position: relative; flex: 1; }
+.form-input { width: 100%; padding: 10px 12px; border: 1px solid #DDE1E6; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
+.dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #E8ECF0; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; }
+.dropdown-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; cursor: pointer; font-size: 13px; }
+.dropdown-item:hover { background: #F5F7FA; }
+.dropdown-item .user-name { color: #333; font-weight: 500; }
+.dropdown-item .user-id { color: #999; font-size: 12px; }
+.invite-target { margin: 8px 0 0; font-size: 13px; color: #1890FF; }
 .btn-primary { padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg,var(--color-primary-500, #10b981),var(--color-primary-400, #34d399)); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn-primary:disabled { opacity: 0.6; }
 .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }

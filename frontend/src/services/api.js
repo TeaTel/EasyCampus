@@ -177,6 +177,10 @@ export const userApi = {
 
   verifyAndResetPassword(account, verifyCode, newPassword) {
     return api.post('/v2/users/reset-password/verify', { account, verifyCode, newPassword })
+  },
+
+  searchUsers(keyword) {
+    return api.get('/v2/users/search', { params: { keyword, size: 20 } })
   }
 }
 
