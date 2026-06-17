@@ -230,6 +230,12 @@ const routes = [
     meta: { title: '发现组织' }
   },
   {
+    path: '/orgs/invitations',
+    name: 'Invitations',
+    component: () => import('../views/InvitationsPage.vue'),
+    meta: { requiresAuth: true, title: '我的邀请' }
+  },
+  {
     path: '/orgs/:id',
     name: 'OrgDetail',
     component: () => import('../views/OrgDetailPage.vue'),

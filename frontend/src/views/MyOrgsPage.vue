@@ -29,6 +29,16 @@
         </div>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
       </div>
+      <button class="invitation-card-entry" @click="$router.push('/orgs/invitations')">
+        <div class="invitation-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1890FF" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="invitation-info">
+          <span class="invitation-title">我的邀请</span>
+          <span class="invitation-desc">查看和处理组织邀请</span>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+      </button>
       <button class="discover-card" @click="$router.push('/orgs/discover')">
         <div class="discover-icon">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FF6A00" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
@@ -113,4 +123,21 @@ function randomColor(id) { return colors[Math.abs(Number(id)) % colors.length] }
 .discover-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .discover-title { font-size: 15px; font-weight: 600; color: #333; }
 .discover-desc { font-size: 12px; color: #999; }
+
+.invitation-card-entry {
+  display: flex; align-items: center; gap: 14px; padding: 16px;
+  background: #fff; border-radius: 12px; cursor: pointer;
+  border: 1.5px dashed #DDE1E6; transition: all 0.15s; width: 100%;
+  text-align: left; font-family: inherit;
+}
+.invitation-card-entry:active { transform: scale(0.98); }
+.invitation-card-entry:hover { border-color: #1890FF; background: #F0F7FF; }
+.invitation-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: #E6F4FF; flex-shrink: 0;
+}
+.invitation-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.invitation-title { font-size: 15px; font-weight: 600; color: #333; }
+.invitation-desc { font-size: 12px; color: #999; }
 </style>

@@ -57,7 +57,7 @@
             <img :src="m.userAvatar || defaultAvatar" class="member-avatar" @error="e => e.target.src = defaultAvatar" />
             <span class="member-name">{{ m.userName || '用户' + m.userId }}</span>
             <span class="role-tag">{{ roleLabel(m.role) }}</span>
-            <div v-if="myRole.role === 'ADMIN' && m.role !== 'ADMIN'" class="member-actions">
+            <div v-if="(myRole.role === 'ADMIN' || myRole.role === 'MODERATOR') && m.role !== 'ADMIN'" class="member-actions">
               <button @click="changeRole(m.userId, 'MODERATOR')" v-if="m.role === 'MEMBER'">升为管理</button>
               <button @click="changeRole(m.userId, 'MEMBER')" v-if="m.role === 'MODERATOR'">降为成员</button>
               <button class="btn-danger" @click="removeMem(m.userId)">移出</button>

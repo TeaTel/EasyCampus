@@ -1,22 +1,22 @@
 <template>
   <div id="app" class="app-root">
-    <ToastProvider />
+    <ToastProvider>
+      <AppHeader v-if="showAppHeader" @toggle-sidebar="showSideMenu = !showSideMenu" />
 
-    <AppHeader v-if="showAppHeader" @toggle-sidebar="showSideMenu = !showSideMenu" />
+      <SideMenu :visible="showSideMenu" @close="showSideMenu = false" />
 
-    <SideMenu :visible="showSideMenu" @close="showSideMenu = false" />
+      <main class="main-content" :class="{ 'no-header': !showAppHeader }">
+        <div class="content-wrapper">
+          <router-view v-slot="{ Component, route: currentRoute }">
+            <transition :name="currentRoute.meta.transition || 'page'" mode="out-in">
+              <component :is="Component" :key="currentRoute.path" />
+            </transition>
+          </router-view>
+        </div>
+      </main>
 
-    <main class="main-content" :class="{ 'no-header': !showAppHeader }">
-      <div class="content-wrapper">
-        <router-view v-slot="{ Component, route: currentRoute }">
-          <transition :name="currentRoute.meta.transition || 'page'" mode="out-in">
-            <component :is="Component" :key="currentRoute.path" />
-          </transition>
-        </router-view>
-      </div>
-    </main>
-
-    <NavBar class="mobile-navbar" />
+      <NavBar class="mobile-navbar" />
+    </ToastProvider>
   </div>
 </template>
 

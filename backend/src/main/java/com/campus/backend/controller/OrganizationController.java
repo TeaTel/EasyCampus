@@ -76,6 +76,12 @@ public class OrganizationController {
         return Result.success(null);
     }
 
+    @PostMapping("/invitations/{code}/reject")
+    public Result<Void> rejectInvitation(@PathVariable String code) {
+        orgService.rejectInvitation(code, SecurityUtils.getCurrentUserId());
+        return Result.success(null);
+    }
+
     @GetMapping("/invitations/my")
     public Result<List<OrgInvitation>> getMyInvitations() {
         return Result.success(orgService.getMyInvitations(SecurityUtils.getCurrentUserId()));

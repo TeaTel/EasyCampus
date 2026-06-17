@@ -17,7 +17,6 @@
           <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
       </div>
-      <span class="status-badge" :class="statusClass">{{ statusText }}</span>
     </div>
 
     <div class="card-body">
@@ -43,7 +42,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
   activity: { type: Object, required: true }
@@ -51,16 +50,6 @@ const props = defineProps({
 defineEmits(['click'])
 
 const imageError = ref(false)
-
-const statusText = computed(() => {
-  const map = { upcoming: '即将开始', ongoing: '进行中', past: '已结束' }
-  return map[props.activity.status] || '即将开始'
-})
-
-const statusClass = computed(() => {
-  const map = { upcoming: 'badge-upcoming', ongoing: 'badge-ongoing', past: 'badge-past' }
-  return map[props.activity.status] || 'badge-upcoming'
-})
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -117,42 +106,6 @@ function formatDate(dateStr) {
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.5);
-}
-
-.status-badge {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  padding: var(--space-0_5) var(--space-2);
-  border-radius: var(--radius-full);
-  font-size: 10px;
-  font-weight: var(--font-bold);
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-  backdrop-filter: blur(8px);
-}
-
-.badge-upcoming {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-green);
-}
-
-.badge-ongoing {
-  background: var(--gradient-accent);
-  color: white;
-  box-shadow: var(--shadow-accent);
-  animation: pulse-status 2s ease-in-out infinite;
-}
-
-.badge-past {
-  background: var(--color-gray-500);
-  color: white;
-}
-
-@keyframes pulse-status {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
 }
 
 .card-body {

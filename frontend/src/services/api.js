@@ -655,6 +655,7 @@ export const organizationApi = {
   getList(params) { return api.get('/v2/organizations', { params }) },
   invite(orgId, inviteeId) { return api.post(`/v2/organizations/${orgId}/invite`, { inviteeId }) },
   acceptInvite(code) { return api.post(`/v2/organizations/invitations/${code}/accept`) },
+  rejectInvite(code) { return api.post(`/v2/organizations/invitations/${code}/reject`) },
   getMyInvitations() { return api.get('/v2/organizations/invitations/my') },
   applyJoin(orgId, message) { return api.post(`/v2/organizations/${orgId}/apply`, { message }) },
   getPendingRequests(orgId) { return api.get(`/v2/organizations/${orgId}/requests`) },

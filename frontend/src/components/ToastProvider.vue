@@ -1,5 +1,6 @@
 <template>
   <div class="toast-provider">
+    <slot />
     <teleport to="body">
       <transition-group name="toast-slide" tag="div" class="toast-stack">
         <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type">

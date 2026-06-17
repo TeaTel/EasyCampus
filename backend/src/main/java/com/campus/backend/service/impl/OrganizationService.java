@@ -130,6 +130,19 @@ public class OrganizationService {
     }
 
     @Transactional
+    public void rejectInvitation(String inviteCode, Long userId) {
+        OrgInvitation inv = invitationMapper.selectByCode(inviteCode);
+        if (inv == null || !"PENDING".equals(inv.getStatus())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "邀请码无效或已过期");
+        }
+        if (!inv.getInviteeId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "此邀请不属于您");
+        }
+        invitationMapper.respondByCode(inviteCode, "REJECTED");
+        auditLog(inv.getOrgId(), userId, "REJECT_INVITE", null, inviteCode);
+    }
+
+    @Transactional
     public void applyToJoin(Long orgId, Long userId, String message) {
         Organization org = getOrganization(orgId);
         if (!"APPLY".equals(org.getJoinType())) {
