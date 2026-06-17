@@ -12,8 +12,11 @@
     <div v-else-if="orgs.length === 0" class="empty-state">
       <div class="empty-icon">🏛️</div>
       <p>你还未加入任何组织</p>
-      <button class="create-btn" @click="$router.push('/orgs/create')">创建组织</button>
-      <button class="discover-btn" @click="$router.push('/orgs/discover')">发现组织</button>
+      <div class="empty-actions">
+        <button class="create-btn" @click="$router.push('/orgs/create')">创建组织</button>
+        <button class="invite-btn" @click="$router.push('/orgs/invitations')">我的邀请</button>
+        <button class="discover-btn" @click="$router.push('/orgs/discover')">发现组织</button>
+      </div>
     </div>
     <main v-else class="org-list">
       <div v-for="org in orgs" :key="org.id" class="org-card" @click="$router.push(`/orgs/${org.id}`)">
@@ -91,8 +94,10 @@ function randomColor(id) { return colors[Math.abs(Number(id)) % colors.length] }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .empty-state { text-align: center; padding: 80px 32px; }
 .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
-.create-btn { margin-top: 20px; padding: 12px 40px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399)); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; display: block; margin: 20px auto 10px; }
-.discover-btn { padding: 10px 32px; border-radius: 20px; border: 1px solid #DDE1E6; background: #fff; color: #666; font-size: 14px; cursor: pointer; }
+.empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+.create-btn { padding: 12px 32px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399)); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+.invite-btn { padding: 10px 28px; border-radius: 20px; border: 1px solid #1890FF; background: #fff; color: #1890FF; font-size: 14px; cursor: pointer; }
+.discover-btn { padding: 10px 28px; border-radius: 20px; border: 1px solid #DDE1E6; background: #fff; color: #666; font-size: 14px; cursor: pointer; }
 .org-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
 .org-card { display: flex; align-items: center; gap: 14px; padding: 16px; background: #fff; border-radius: 12px; cursor: pointer; transition: transform 0.15s; }
 .org-card:active { transform: scale(0.98); }
