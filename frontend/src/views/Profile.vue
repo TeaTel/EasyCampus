@@ -289,7 +289,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { productApi, postApi, favoriteApi, uploadApi, userApi, followApi, organizationApi } from '../services/api'

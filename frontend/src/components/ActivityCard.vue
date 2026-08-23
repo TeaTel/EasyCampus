@@ -1,5 +1,5 @@
 <template>
-  <div class="activity-card" @click="$emit('click', activity.id)">
+  <div class="activity-card" @click="emit('click', activity.id)">
     <div class="card-cover">
       <img
         v-if="activity.coverImage"
@@ -41,13 +41,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
 const props = defineProps({
   activity: { type: Object, required: true }
 })
-defineEmits(['click'])
+const emit = defineEmits(['click'])
 
 const imageError = ref(false)
 

@@ -97,7 +97,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { notificationApi } from '../services/api'
@@ -143,7 +143,7 @@ async function fetchNotifications(isLoadMore = false) {
   }
 
   try {
-    const params = {
+    const params: Record<string, unknown> = {
       page: currentPage.value,
       size: 20
     }
@@ -267,7 +267,7 @@ function formatTime(timeStr) {
   if (!timeStr) return ''
   const date = new Date(timeStr)
   const now = new Date()
-  const diff = now - date
+  const diff = now.getTime() - date.getTime()
   const minutes = Math.floor(diff / 60000)
   if (minutes < 1) return '刚刚'
   if (minutes < 60) return `${minutes}分钟前`

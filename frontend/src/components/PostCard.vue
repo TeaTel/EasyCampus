@@ -1,5 +1,5 @@
 <template>
-  <div class="post-card" @click="$emit('click')">
+  <div class="post-card" @click="emit('click')">
     <div class="card-image">
       <img
         v-if="post.coverImage"
@@ -47,19 +47,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../store/auth'
 import LikeButton from './LikeButton.vue'
 
 const props = defineProps({
   post: { type: Object, required: true }
 })
 
-const emit = defineEmits(['click', 'like-toggled'])
+const emit = defineEmits(['click', 'likeToggled'])
 const router = useRouter()
-const auth = useAuthStore()
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#f0fdf4"/><circle cx="20" cy="15" r="8" fill="#6ee7b7"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#6ee7b7"/></svg>')
 
@@ -111,7 +109,7 @@ function onImageError(e) {
 function onLikeToggled(isLiked, count) {
   props.post.isLiked = isLiked
   props.post.likeCount = count
-  emit('like-toggled', { isLiked, count })
+  emit('likeToggled', { isLiked, count })
 }
 
 function goToUser() {

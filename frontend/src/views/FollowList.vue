@@ -53,7 +53,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { followApi, userApi } from '../services/api'
@@ -61,7 +61,7 @@ import { useAuthStore } from '../store/auth'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const { isAuthenticated, currentUser } = useAuthStore()
 
 const activeTab = ref(route.query.tab || 'following')
 const users = ref([])
@@ -76,14 +76,14 @@ const followedSet = ref(new Set())
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
 
-const currentUserId = computed(() => auth.currentUser.value?.id)
+const currentUserId = computed(() => currentUser.value?.id)
 const isViewingSelf = computed(() => {
   const uid = Number(route.params.userId || route.query.userId)
   return currentUserId.value && Number(currentUserId.value) === uid
 })
 
 function showFollowBtn(userId) {
-  if (!auth.isAuthenticated) return false
+  if (!isAuthenticated.value) return false
   return Number(currentUserId.value) !== Number(userId)
 }
 
@@ -105,7 +105,7 @@ watch(activeTab, () => {
 })
 
 async function loadTargetUser() {
-  const userId = route.params.userId || route.query.userId
+  const userId = String(route.params.userId || route.query.userId || '')
   if (!userId) return
   try {
     const res = await userApi.getUserPublic(userId)
@@ -114,7 +114,7 @@ async function loadTargetUser() {
 }
 
 async function loadStats() {
-  const userId = route.params.userId || route.query.userId || currentUserId.value
+  const userId = (String(route.params.userId || route.query.userId || '') || currentUserId.value) as string | number
   if (!userId) return
   try {
     const res = await followApi.getFollowStats(userId)
@@ -129,7 +129,7 @@ async function loadData(isLoadMore = false) {
   if (isLoadMore) loadingMore.value = true
   else loading.value = true
 
-  const userId = route.params.userId || route.query.userId
+  const userId = String(route.params.userId || route.query.userId || '')
   try {
     let res
     if (activeTab.value === 'following') {
@@ -147,7 +147,7 @@ async function loadData(isLoadMore = false) {
       }
       hasMore.value = list.length === pageSize
 
-      if (auth.isAuthenticated && currentUserId.value) {
+      if (isAuthenticated.value && currentUserId.value) {
         for (const u of list) {
           checkIfFollowing(u.id)
         }
@@ -195,7 +195,7 @@ async function handleToggleFollow(user) {
 }
 
 function goToProfile(userId) {
-  router.push(`/user/${userId}`)
+  router.push(`/users/${userId}`)
 }
 
 function onAvatarError(e) {

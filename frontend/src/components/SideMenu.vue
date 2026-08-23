@@ -1,7 +1,7 @@
 <template>
   <teleport to="body">
     <transition name="drawer-fade">
-      <div v-if="visible" class="side-overlay" @click="$emit('close')"></div>
+      <div v-if="visible" class="side-overlay" @click="emit('close')"></div>
     </transition>
     <transition name="drawer-slide">
       <aside v-if="visible" class="side-drawer">
@@ -130,7 +130,7 @@
   </teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -143,13 +143,9 @@ const props = defineProps({ visible: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
 
 const router = useRouter()
-const store = useAuthStore()
+const { isAuthenticated, currentUser, logout } = useAuthStore()
 const toast = useToast()
-const notificationStore = useNotificationStore()
-
-const isAuthenticated = computed(() => store.isAuthenticated.value)
-const currentUser = computed(() => store.currentUser.value)
-const notificationUnreadCount = computed(() => notificationStore.notificationUnreadCount.value)
+const { notificationUnreadCount } = useNotificationStore()
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
 
@@ -220,7 +216,7 @@ function goProfile() { emit('close'); router.push('/profile') }
 function goLogin() { emit('close'); router.push('/login') }
 function goRoute(path) { emit('close'); router.push(path) }
 function handleAbout() { emit('close'); toast.showToast('易校EasyCampus v2.0 —— 让每一件闲置都有归宿') }
-function handleLogout() { emit('close'); store.logout() }
+function handleLogout() { emit('close'); logout() }
 function onAvatarError(e) { e.target.src = defaultAvatar }
 </script>
 

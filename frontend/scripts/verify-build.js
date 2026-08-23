@@ -60,13 +60,13 @@ if (hasVueCli) {
 
 // 检查Vite配置文件
 console.log('\n⚙️ 检查配置文件:');
-const viteConfigPath = path.join(__dirname, '../vite.config.js');
+const viteConfigPath = path.join(__dirname, '../vite.config.ts');
 const vueConfigPath = path.join(__dirname, '../vue.config.js');
 
 if (fs.existsSync(viteConfigPath)) {
-  console.log('   ✅ 找到vite.config.js');
+  console.log('   ✅ 找到vite.config.ts');
 } else {
-  console.log('   ❌ 未找到vite.config.js');
+  console.log('   ❌ 未找到vite.config.ts');
 }
 
 if (fs.existsSync(vueConfigPath)) {

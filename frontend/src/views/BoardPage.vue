@@ -12,7 +12,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { categoryApi } from '../services/api'
@@ -22,7 +22,7 @@ const board = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await categoryApi.getCategoryDetail(route.params.id)
+    const res = await categoryApi.getCategoryDetail(String(route.params.id))
     if (res.code === 200) board.value = res.data
   } catch (e) {}
 })

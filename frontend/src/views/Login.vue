@@ -112,7 +112,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -159,7 +159,7 @@ async function handleLogin() {
     )
 
     if (result.success) {
-      const redirectPath = route.query.redirect || '/'
+      const redirectPath = String(route.query.redirect || '/')
       router.push(redirectPath)
     } else {
       errorMessage.value = result.message || '登录失败，请检查账号密码'

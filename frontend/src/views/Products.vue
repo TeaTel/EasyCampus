@@ -155,7 +155,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productApi } from '../services/api'
@@ -201,10 +201,10 @@ const categories = [
 
 onMounted(async () => {
   if (route.query.keyword) {
-    searchKeyword.value = route.query.keyword
+    searchKeyword.value = String(route.query.keyword || '')
   }
   if (route.query.categoryId) {
-    selectedCategoryId.value = parseInt(route.query.categoryId)
+    selectedCategoryId.value = parseInt(String(route.query.categoryId || ''))
     activeFilter.value = 'category'
     showCategoryFilter.value = true
   }
@@ -249,7 +249,7 @@ async function loadProducts(isLoadMore = false) {
       loading.value = true
     }
 
-    const params = {
+    const params: Record<string, unknown> = {
       page: currentPage.value,
       size: pageSize,
       status: 1

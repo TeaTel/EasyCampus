@@ -108,7 +108,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { userApi, postApi, productApi, followApi } from '../services/api'
@@ -118,7 +118,7 @@ import ProductCard from '../components/ProductCard.vue'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const { isAuthenticated, currentUser } = useAuthStore()
 
 const profile = ref(null)
 const loading = ref(true)
@@ -143,12 +143,12 @@ const productPageSize = 10
 const allProducts = ref([])
 const displayedProductCount = ref(productPageSize)
 
-const stats = ref({ postCount: 0, followingCount: 0, followerCount: 0 })
+const stats = ref({ postCount: 0, followingCount: 0, followerCount: 0, productCount: 0 })
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
 
 const isSelf = computed(() => {
-  return auth.isAuthenticated && auth.currentUser && Number(auth.currentUser.id) === Number(profile.value?.id)
+  return isAuthenticated.value && currentUser.value && Number(currentUser.value.id) === Number(profile.value?.id)
 })
 
 onMounted(() => { loadProfile() })
@@ -157,7 +157,7 @@ async function loadProfile() {
   loading.value = true
   error.value = null
   try {
-    const userId = route.params.id
+    const userId = String(route.params.id)
     const [userRes, statsRes] = await Promise.allSettled([
       userApi.getUserPublic(userId),
       followApi.getFollowStats(userId)
@@ -171,7 +171,7 @@ async function loadProfile() {
     if (statsRes.status === 'fulfilled' && statsRes.value.code === 200) {
       stats.value = statsRes.value.data || {}
     }
-    if (profile.value && auth.isAuthenticated && !isSelf.value) {
+    if (profile.value && isAuthenticated.value && !isSelf.value) {
       checkFollowStatus(profile.value.id)
     }
     loadPosts()
@@ -260,7 +260,7 @@ function loadMoreProducts() {
 }
 
 function startChat() {
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated.value) {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }

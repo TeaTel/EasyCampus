@@ -15,7 +15,8 @@ COPY frontend/package-lock.json ./
 
 RUN npm ci
 
-COPY frontend/vite.config.js ./
+COPY frontend/vite.config.ts ./
+COPY frontend/tsconfig.json ./
 COPY frontend/index.html ./
 COPY frontend/public ./public/
 COPY frontend/src ./src/
