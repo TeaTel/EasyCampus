@@ -32,7 +32,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { organizationApi } from '../services/api'
 import { useToast } from '../use/useToast'
@@ -49,7 +49,7 @@ onMounted(() => search())
 async function search() {
   loading.value = true
   try {
-    const params = { page: 1, size: 50 }
+    const params: Record<string, unknown> = { page: 1, size: 50 }
     if (keyword.value) params.keyword = keyword.value
     const res = await organizationApi.getList(params)
     if (res.code === 200) orgs.value = res.data?.list || []

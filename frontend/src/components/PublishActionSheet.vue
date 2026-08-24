@@ -1,6 +1,6 @@
 <template>
   <transition name="sheet-fade">
-    <div v-if="visible" class="action-sheet-overlay" @click.self="$emit('close')">
+    <div v-if="visible" class="action-sheet-overlay" @click.self="emit('close')">
       <transition name="sheet-slide">
         <div v-if="visible" class="action-sheet">
           <div class="sheet-header">
@@ -38,14 +38,14 @@
               </svg>
             </button>
           </div>
-          <button @click="$emit('close')" class="sheet-cancel">取消</button>
+          <button @click="emit('close')" class="sheet-cancel">取消</button>
         </div>
       </transition>
     </div>
   </transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 
 defineProps({

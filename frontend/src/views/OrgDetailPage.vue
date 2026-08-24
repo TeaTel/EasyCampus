@@ -42,7 +42,7 @@
         <div v-if="manageTab === 'requests'" class="panel-body">
           <div v-if="pendingRequests.length === 0" class="empty-panel">暂无待审批申请</div>
           <div v-for="req in pendingRequests" :key="req.id" class="request-item">
-            <img :src="req.userAvatar || defaultAvatar" class="member-avatar" @error="e => e.target.src = defaultAvatar" />
+            <img :src="req.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
             <span class="req-user">{{ req.userName || '用户' + req.userId }} 申请加入</span>
             <span class="req-msg" v-if="req.message">{{ req.message }}</span>
             <div class="req-actions">
@@ -54,7 +54,7 @@
 
         <div v-if="manageTab === 'members'" class="panel-body">
           <div v-for="m in members" :key="m.id" class="member-item">
-            <img :src="m.userAvatar || defaultAvatar" class="member-avatar" @error="e => e.target.src = defaultAvatar" />
+            <img :src="m.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
             <span class="member-name">{{ m.userName || '用户' + m.userId }}</span>
             <span class="role-tag">{{ roleLabel(m.role) }}</span>
             <div v-if="(myRole.role === 'ADMIN' || myRole.role === 'MODERATOR') && m.role !== 'ADMIN'" class="member-actions">
@@ -104,7 +104,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { organizationApi, userApi } from '../services/api'
@@ -132,7 +132,7 @@ const hasApplied = ref(false)
 const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23eee" width="100" height="100"/><text x="50" y="54" text-anchor="middle" font-size="36" fill="%23999" font-family="sans-serif">?</text></svg>'
 
 onMounted(async () => {
-  const orgId = route.params.id
+  const orgId = String(route.params.id)
   try {
     const [orgRes, roleRes] = await Promise.allSettled([
       organizationApi.getDetail(orgId),
@@ -170,7 +170,7 @@ async function loadManageData(orgId) {
 async function applyJoin() {
   applying.value = true
   try {
-    const res = await organizationApi.applyJoin(route.params.id, '')
+    const res = await organizationApi.applyJoin(String(route.params.id), '')
     if (res.code === 200) {
       toast.showToast('申请已提交，等待管理员审核', 'success')
       hasApplied.value = true
@@ -183,16 +183,16 @@ async function applyJoin() {
     applying.value = false
   }
 }
-async function approveReq(id) { await organizationApi.approveRequest(id); loadManageData(route.params.id) }
-async function rejectReq(id) { await organizationApi.rejectRequest(id); loadManageData(route.params.id) }
-async function changeRole(uid, role) { await organizationApi.changeRole(route.params.id, uid, role); loadManageData(route.params.id) }
+async function approveReq(id) { await organizationApi.approveRequest(id); loadManageData(String(route.params.id)) }
+async function rejectReq(id) { await organizationApi.rejectRequest(id); loadManageData(String(route.params.id)) }
+async function changeRole(uid, role) { await organizationApi.changeRole(String(route.params.id), uid, role); loadManageData(String(route.params.id)) }
 async function removeMem(uid) {
   const ok = await toast.showConfirm('确定移出该成员?')
   if (!ok) return
   try {
-    await organizationApi.removeMember(route.params.id, uid)
+    await organizationApi.removeMember(String(route.params.id), uid)
     toast.showToast('已移除成员')
-    loadManageData(route.params.id)
+    loadManageData(String(route.params.id))
   } catch (e) {
     toast.showToast(e?.response?.data?.message || e?.message || '移除失败')
   }
@@ -200,7 +200,7 @@ async function removeMem(uid) {
 async function doInvite() {
   if (!inviteUserId.value) return
   try {
-    await organizationApi.invite(route.params.id, Number(inviteUserId.value))
+    await organizationApi.invite(String(route.params.id), Number(inviteUserId.value))
     toast.showToast('邀请已发送', 'success')
     inviteUserId.value = ''
     inviteSearchKeyword.value = ''
@@ -245,7 +245,7 @@ async function leaveOrg() {
   if (!ok) return
   leaving.value = true
   try {
-    await organizationApi.leaveOrg(route.params.id)
+    await organizationApi.leaveOrg(String(route.params.id))
     toast.showToast('已退出组织')
     // 退出后刷新页面状态：myRole清空，回到非成员视图
     myRole.value = null

@@ -29,12 +29,12 @@
   </Teleport>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted, type PropType } from 'vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
-  images: { type: Array, default: () => [] },
+  images: { type: Array as PropType<string[]>, default: () => [] },
   initialIndex: { type: Number, default: 0 }
 })
 

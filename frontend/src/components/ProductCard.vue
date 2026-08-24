@@ -1,5 +1,5 @@
 <template>
-  <div class="product-card" @click="$emit('click')">
+  <div class="product-card" @click="emit('click')">
     <div class="card-image">
       <img
         v-if="product.coverImage"
@@ -59,7 +59,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import LikeButton from './LikeButton.vue'
@@ -68,7 +68,7 @@ const props = defineProps({
   product: { type: Object, required: true }
 })
 
-const emit = defineEmits(['click', 'like-toggled'])
+const emit = defineEmits(['click', 'likeToggled'])
 const router = useRouter()
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
@@ -134,7 +134,7 @@ function onImageError(e) {
 function onLikeToggled(isLiked, count) {
   props.product.isLiked = isLiked
   props.product.likeCount = count
-  emit('like-toggled', { isLiked, count })
+  emit('likeToggled', { isLiked, count })
 }
 
 function onChatClick() {

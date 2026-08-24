@@ -101,7 +101,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { favoriteApi } from '../services/api'
@@ -136,7 +136,7 @@ function formatTime(timestamp) {
   if (!timestamp) return ''
   const date = new Date(timestamp)
   const now = new Date()
-  const diff = now - date
+  const diff = now.getTime() - date.getTime()
   if (diff < 60000) return '刚刚收藏'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前收藏'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前收藏'

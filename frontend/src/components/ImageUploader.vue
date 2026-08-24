@@ -71,7 +71,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { uploadApi } from '../services/api'
 
@@ -86,7 +86,6 @@ const COMPRESS_QUALITY = 0.75 // JPEG压缩质量（0-1）
 const COMPRESS_MIN_SIZE = 300 * 1024 // 小于此大小的图片不压缩（300KB）
 
 const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
   maxCount: { type: Number, default: 9 },
   maxSize: { type: Number, default: 10 },
   accept: { type: String, default: 'image/jpeg,image/png,image/webp' },
@@ -94,7 +93,8 @@ const props = defineProps({
   placeholder: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:modelValue', 'upload-success', 'upload-error', 'all-uploaded'])
+const model = defineModel({ type: Array, default: () => [] })
+const emit = defineEmits(['upload-success', 'upload-error', 'all-uploaded'])
 
 const imageList = ref([])
 let idCounter = 0
@@ -102,7 +102,7 @@ let idCounter = 0
 const uploading = computed(() => imageList.value.some(img => img.status === 'uploading'))
 
 // 监听外部 modelValue 变化（初始化时）
-watch(() => props.modelValue, (urls) => {
+watch(model, (urls) => {
   if (urls && urls.length > 0 && imageList.value.length === 0) {
     imageList.value = urls.map(url => ({
       id: ++idCounter,
@@ -121,7 +121,7 @@ function emitUrls() {
   const urls = imageList.value
     .filter(img => img.status === 'success' && img.url)
     .map(img => img.url)
-  emit('update:modelValue', urls)
+  model.value = urls
 }
 
 // 计算缩放后尺寸（保持宽高比）
@@ -196,8 +196,9 @@ async function compressImageBeforeUpload(file) {
 }
 
 // 文件选择处理
-async function handleFileSelect(e) {
-  const files = Array.from(e.target.files)
+async function handleFileSelect(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
   const allowedTypes = props.accept.split(',')
   const maxSizeBytes = props.maxSize * 1024 * 1024
 
@@ -236,7 +237,7 @@ async function handleFileSelect(e) {
     }
   }
 
-  e.target.value = ''
+  input.value = ''
 }
 
 function createImageItem(file) {

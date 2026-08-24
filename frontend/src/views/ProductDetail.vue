@@ -7,7 +7,7 @@
         <span class="nav-username" @click="goToSeller">{{ product?.sellerName || '匿名卖家' }}</span>
       </div>
       <div class="nav-right">
-        <button v-if="auth.isAuthenticated && auth.currentUser?.id !== product?.sellerId" class="follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
+        <button v-if="isAuthenticated && currentUser?.id !== product?.sellerId" class="follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
           <svg v-if="!isFollowing" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
           {{ isFollowing ? '已关注' : '关注' }}
         </button>
@@ -118,7 +118,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productApi, followApi, favoriteApi } from '../services/api'
@@ -131,7 +131,7 @@ import ImageViewer from '../components/ImageViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const { isAuthenticated, currentUser } = useAuthStore()
 const toast = useToast()
 
 const product = ref(null)
@@ -143,7 +143,7 @@ const isFavorited = ref(false)
 const viewerVisible = ref(false)
 const viewerIndex = ref(0)
 
-const isOwner = computed(() => auth.isAuthenticated && auth.currentUser?.id === product.value?.sellerId)
+const isOwner = computed(() => isAuthenticated.value && currentUser.value?.id === product.value?.sellerId)
 
 const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
 
@@ -176,11 +176,11 @@ async function loadProduct() {
   loading.value = true
   error.value = null
   try {
-    const res = await productApi.getProductDetail(route.params.id)
+    const res = await productApi.getProductDetail(String(route.params.id))
     if (res.code === 200) {
       product.value = res.data
-      if (product.value.sellerId && auth.isAuthenticated) checkFollowStatus(product.value.sellerId)
-      if (auth.isAuthenticated) checkFavoriteStatus(product.value.id)
+      if (product.value.sellerId && isAuthenticated.value) checkFollowStatus(product.value.sellerId)
+      if (isAuthenticated.value) checkFavoriteStatus(product.value.id)
     } else {
       // 后端返回非200时，检查是否是内容不存在
       const msg = res.message || ''
@@ -232,7 +232,7 @@ function onLikeToggled(isLiked, count) {
 
 async function toggleFavorite() {
   /* 未登录时提示并跳转登录页 */
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated.value) {
     toast.showToast('请先登录')
     router.push('/login')
     return
@@ -267,7 +267,7 @@ async function handleShare() {
 }
 
 function focusChat() {
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated.value) {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }
@@ -294,12 +294,12 @@ async function markAsSold() {
     const res = await productApi.markAsSold(product.value.id)
     if (res.code === 200) {
       product.value.status = 2
-      toast.show('已标记为售出')
+      toast.showToast('已标记为售出')
     } else {
-      toast.show(res.message || '操作失败')
+      toast.showToast(res.message || '操作失败')
     }
   } catch {
-    toast.show('操作失败，请重试')
+    toast.showToast('操作失败，请重试')
   }
 }
 </script>

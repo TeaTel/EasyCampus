@@ -10,7 +10,7 @@
   </button>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { likeApi, favoriteApi } from '../services/api'
 import { useAuthStore } from '../store/auth'
@@ -25,7 +25,7 @@ const props = defineProps({
 
 const emit = defineEmits(['toggled'])
 
-const auth = useAuthStore()
+const { isAuthenticated } = useAuthStore()
 const toast = useToast()
 const loading = ref(false)
 
@@ -37,7 +37,7 @@ const formattedCount = computed(() => {
 })
 
 async function toggleLike() {
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated.value) {
     toast.showToast('请先登录', 'error')
     return
   }

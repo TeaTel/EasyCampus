@@ -139,7 +139,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { adApi } from '../services/api'
@@ -174,6 +174,9 @@ const defaultPackages = [
     price: '1.90',
     exposureBoost: 2,
     durationDays: 1,
+    interval: 5,
+    hasBanner: false,
+    hasRecommendation: false,
     badge: '体验',
     estimatedReach: '约 200-500 次曝光',
     scenario: '适合首次使用推流的用户，推广闲置物品、二手教材等',
@@ -186,6 +189,9 @@ const defaultPackages = [
     price: '4.90',
     exposureBoost: 3,
     durationDays: 3,
+    interval: 4,
+    hasBanner: true,
+    hasRecommendation: false,
     badge: '推荐',
     estimatedReach: '约 800-2000 次曝光',
     scenario: '适合推广二手数码、社团活动、兼职招聘等个人发布',
@@ -198,6 +204,9 @@ const defaultPackages = [
     price: '14.90',
     exposureBoost: 5,
     durationDays: 7,
+    interval: 3,
+    hasBanner: true,
+    hasRecommendation: true,
     badge: '热门',
     estimatedReach: '约 3000-8000 次曝光',
     scenario: '适合推广高价值商品、考研资料、校园周边服务等',
@@ -210,6 +219,9 @@ const defaultPackages = [
     price: '29.90',
     exposureBoost: 10,
     durationDays: 14,
+    interval: 2,
+    hasBanner: true,
+    hasRecommendation: true,
     badge: '爆款',
     estimatedReach: '约 10000-30000 次曝光',
     scenario: '适合社团招新、商家入驻推广、大型活动宣传、毕业季清仓等',

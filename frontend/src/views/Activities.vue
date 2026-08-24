@@ -39,7 +39,7 @@
       <div v-else-if="error" class="error-state">
         <div class="error-icon">😔</div>
         <p class="error-text">{{ error }}</p>
-        <button @click="loadActivities" class="retry-btn">点击重试</button>
+        <button @click="loadActivities()" class="retry-btn">点击重试</button>
       </div>
 
       <div v-else-if="activities.length === 0" class="empty-state">
@@ -72,7 +72,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi } from '../services/api'

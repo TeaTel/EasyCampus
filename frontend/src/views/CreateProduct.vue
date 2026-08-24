@@ -172,7 +172,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -182,7 +182,7 @@ import TagInput from '../components/TagInput.vue'
 import ImageUploader from '../components/ImageUploader.vue'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const { isAuthenticated } = useAuthStore()
 const toast = useToast()
 
 const formData = ref({
@@ -345,7 +345,7 @@ async function handleSubmit() {
     return
   }
 
-  if (!authStore.isAuthenticated) {
+  if (!isAuthenticated.value) {
     toast.showToast('请先登录', 'error')
     router.push({ path: '/login', query: { redirect: '/products/create' } })
     return

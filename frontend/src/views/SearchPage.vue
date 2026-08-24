@@ -217,7 +217,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { searchApi } from '../services/api'
@@ -360,7 +360,7 @@ function searchFromHistory(kw) {
 onMounted(() => {
   loadHistory()
   /* 同时支持 keyword 和 q 两种 URL 参数格式 */
-  const queryKeyword = route.query.keyword || route.query.q
+  const queryKeyword = String(route.query.keyword || route.query.q || '')
   if (queryKeyword) {
     keyword.value = queryKeyword
     doSearch()
@@ -372,7 +372,7 @@ onMounted(() => {
 /* 同时监听 keyword 和 q 参数变化 */
 watch(() => route.query.keyword || route.query.q, (newKw) => {
   if (newKw && newKw !== searchKeyword.value) {
-    keyword.value = newKw
+    keyword.value = String(newKw || '')
     doSearch()
   }
 })
@@ -478,7 +478,7 @@ function formatTime(time) {
   if (!time) return ''
   const d = new Date(time)
   const now = new Date()
-  const diff = now - d
+  const diff = now.getTime() - d.getTime()
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'

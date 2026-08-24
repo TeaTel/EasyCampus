@@ -35,25 +35,19 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, type PropType } from 'vue'
 
 const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
-  presetTags: { type: Array, default: () => [] },
+  presetTags: { type: Array as PropType<string[]>, default: () => [] },
   maxTags: { type: Number, default: 5 },
   placeholder: { type: String, default: '输入标签...' }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const tags = defineModel<string[]>({ default: () => [] })
 
 const inputValue = ref('')
 const showSuggestions = ref(false)
-
-const tags = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
-})
 
 const filteredSuggestions = computed(() => {
   const kw = inputValue.value.trim().toLowerCase()
@@ -75,14 +69,14 @@ function addTag(raw) {
     return
   }
   const newTags = [...tags.value, val]
-  emit('update:modelValue', newTags)
+  tags.value = newTags
   inputValue.value = ''
   showSuggestions.value = false
 }
 
 function removeTag(idx) {
   const newTags = tags.value.filter((_, i) => i !== idx)
-  emit('update:modelValue', newTags)
+  tags.value = newTags
 }
 
 function onInput(e) {

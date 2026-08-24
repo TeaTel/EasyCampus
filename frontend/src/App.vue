@@ -20,7 +20,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './store/auth'
@@ -32,25 +32,19 @@ import SideMenu from './components/SideMenu.vue'
 import ToastProvider from './components/ToastProvider.vue'
 
 const route = useRoute()
-const authStore = useAuthStore()
+const { isAuthenticated } = useAuthStore()
 const notificationStore = useNotificationStore()
 const showSideMenu = ref(false)
 
-const showTabBar = computed(() => {
-  return route.meta.showTabBar === true
-})
-
-const showAppHeader = computed(() => {
-  return route.meta.showTabBar === true
-})
+const showAppHeader = computed(() => route.meta.showTabBar === true)
 
 function initWebSocket() {
-  if (authStore.isAuthenticated) {
+  if (isAuthenticated.value) {
     const token = localStorage.getItem('token')
     if (token && !wsManager.isConnected) {
       wsManager.connect(token)
 
-      wsManager.on('chat_message', (data) => {
+      wsManager.on('chat_message', () => {
         // 收到新消息时刷新聊天未读数
         notificationStore.fetchChatUnreadCount()
       })
@@ -59,7 +53,7 @@ function initWebSocket() {
 }
 
 watch(
-  () => authStore.isAuthenticated,
+  isAuthenticated,
   (isAuth) => {
     if (isAuth) {
       initWebSocket()

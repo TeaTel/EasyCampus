@@ -7,7 +7,7 @@
         <span class="nav-username" @click="goToUser">{{ post?.userName || '匿名用户' }}</span>
       </div>
       <div class="nav-right">
-        <button v-if="auth.isAuthenticated && auth.currentUser?.id !== post?.userId" class="follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
+        <button v-if="isAuthenticated && currentUser?.id !== post?.userId" class="follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
           <svg v-if="!isFollowing" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
           {{ isFollowing ? '已关注' : '关注' }}
         </button>
@@ -101,7 +101,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { postApi, followApi, favoriteApi } from '../services/api'
@@ -115,10 +115,10 @@ import ImageViewer from '../components/ImageViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const { isAuthenticated, currentUser } = useAuthStore()
 const toast = useToast()
 
-const isAdmin = computed(() => auth.currentUser?.role === 'ADMIN')
+const isAdmin = computed(() => currentUser.value?.role === 'ADMIN')
 
 const post = ref(null)
 const loading = ref(true)
@@ -137,7 +137,7 @@ function setupKeyboardAdapter() {
 
   const viewportHandler = () => {
     const vv = window.visualViewport
-    const bottomBar = document.querySelector('.detail-page .bottom-bar')
+    const bottomBar = document.querySelector<HTMLElement>('.detail-page .bottom-bar')
     if (!bottomBar) return
 
     if (vv.height < window.innerHeight * 0.85) {
@@ -201,11 +201,11 @@ async function loadPost() {
   loading.value = true
   error.value = null
   try {
-    const res = await postApi.getPostDetail(route.params.id)
+    const res = await postApi.getPostDetail(String(route.params.id))
     if (res.code === 200) {
       post.value = res.data
-      if (post.value.userId && auth.isAuthenticated) checkFollowStatus(post.value.userId)
-      if (auth.isAuthenticated) checkFavoriteStatus(route.params.id)
+      if (post.value.userId && isAuthenticated.value) checkFollowStatus(post.value.userId)
+      if (isAuthenticated.value) checkFavoriteStatus(String(route.params.id))
     } else {
       // 后端返回非200时，检查是否是内容不存在
       const msg = res.message || ''
@@ -257,7 +257,7 @@ function onLikeToggled(isLiked, count) {
 
 async function toggleFavorite() {
   if (!post.value) return
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated.value) {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }

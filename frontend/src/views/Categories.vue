@@ -88,7 +88,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { categoryApi, productApi } from '../services/api'
@@ -97,7 +97,7 @@ const router = useRouter()
 
 const categories = ref([])
 const categoryTree = ref([])
-const categoryProductCounts = ref({})
+const categoryProductCounts = ref<Record<string | number, number>>({})
 const loading = ref(true)
 const error = ref('')
 

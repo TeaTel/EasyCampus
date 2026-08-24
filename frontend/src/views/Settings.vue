@@ -181,7 +181,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../store/auth'
 import { useToast } from '../use/useToast'

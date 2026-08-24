@@ -76,7 +76,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { messageApi } from '../services/api'
@@ -164,7 +164,7 @@ function formatTime(timestamp) {
 
   const date = new Date(timestamp)
   const now = new Date()
-  const diffMs = now - date
+  const diffMs = now.getTime() - date.getTime()
   const diffMin = Math.floor(diffMs / 60000)
   const diffHour = Math.floor(diffMs / 3600000)
   const diffDay = Math.floor(diffMs / 86400000)

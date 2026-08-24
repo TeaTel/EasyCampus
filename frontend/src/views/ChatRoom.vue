@@ -84,7 +84,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -104,7 +104,7 @@ function setupKeyboardAdapter() {
 
   const viewportHandler = () => {
     const vv = window.visualViewport
-    const inputArea = document.querySelector('.chat-room .input-area')
+    const inputArea = document.querySelector<HTMLElement>('.chat-room .input-area')
     if (!inputArea) return
 
     if (vv.height < window.innerHeight * 0.85) {
@@ -136,7 +136,7 @@ function setupKeyboardAdapter() {
 /** 键盘适配清理函数 */
 let cleanupKeyboard = null
 
-const messages = ref([])
+const messages = ref<any[]>([])
 const loadingHistory = ref(false)
 const sending = ref(false)
 const newMessage = ref('')
@@ -147,8 +147,8 @@ const messagesContainer = ref(null)
 const inputRef = ref(null)
 
 const currentUserId = computed(() => authStore.currentUser.value?.id)
-const currentUserAvatar = computed(() => authStore.currentUser.value?.avatar)
-const contactInfo = ref({})
+const currentUserAvatar = computed(() => String(authStore.currentUser.value?.avatar || ''))
+const contactInfo = ref<any>({})
 const productInfo = ref(null)
 const conversationId = ref(null)
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI0UwRTBFRCIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTciIHI9IjgiIGZpbGw9IndoaXRlIi8+PC9zdmc+'
@@ -160,7 +160,7 @@ function onProductImgError(e) {
 }
 
 const groupedMessages = computed(() => {
-  const groups = {}
+  const groups: Record<string, any[]> = {}
   messages.value.forEach(msg => {
     const date = new Date(msg.createdAt).toDateString()
     if (!groups[date]) groups[date] = []
@@ -257,7 +257,7 @@ async function findConversation(otherUserId) {
 }
 
 async function loadProductInfo() {
-  const productId = route.query.productId
+  const productId = String(route.query.productId || '')
   if (!productId) return
   try {
     const res = await productApi.getProductDetail(productId)
@@ -306,7 +306,7 @@ async function sendMessage() {
   scrollToBottom()
 
   try {
-    const payload = { receiverId: otherUserId, content }
+    const payload: Record<string, unknown> = { receiverId: otherUserId, content }
     if (route.query.productId) payload.productId = Number(route.query.productId) || undefined
 
     const res = await messageApi.sendMessage(payload)
@@ -339,7 +339,7 @@ async function retryMessage(message) {
 
   message._status = 'sending'
   try {
-    const payload = { receiverId: otherUserId, content: message.content }
+    const payload: Record<string, unknown> = { receiverId: otherUserId, content: message.content }
     if (route.query.productId) payload.productId = Number(route.query.productId) || undefined
 
     const res = await messageApi.sendMessage(payload)
@@ -378,7 +378,7 @@ async function markAsRead() {
 }
 
 function viewContactProfile() { showMoreOptions.value = false; router.push(`/users/${route.params.userId}`) }
-async function clearMessages() { const ok = await toast.showConfirm('确定要清空聊天记录吗？'); if (ok) { messages.value = []; showMoreOptions.value = false; toast.show('聊天记录已清空（仅本地）') } }
+async function clearMessages() { const ok = await toast.showConfirm('确定要清空聊天记录吗？'); if (ok) { messages.value = []; showMoreOptions.value = false; toast.showToast('聊天记录已清空（仅本地）') } }
 function toggleEmojiPicker() { showEmojiPicker.value = !showEmojiPicker.value }
 function insertEmoji(emoji) { newMessage.value += emoji; inputRef.value?.focus(); showEmojiPicker.value = false }
 function autoResize() { const tx = inputRef.value; if (!tx) return; tx.style.height = 'auto'; tx.style.height = Math.min(tx.scrollHeight, 120) + 'px' }

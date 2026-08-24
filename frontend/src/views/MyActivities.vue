@@ -137,7 +137,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi } from '../services/api'
@@ -175,7 +175,7 @@ const form = ref({
   imageUrls: []
 })
 
-const errors = ref({})
+const errors = ref<Record<string, string>>({})
 
 onMounted(() => { loadActivities() })
 
@@ -212,7 +212,7 @@ async function loadMore() {
 }
 
 function validate() {
-  const e = {}
+  const e: Record<string, string> = {}
   if (!form.value.title.trim()) e.title = '请输入活动标题'
   if (!form.value.content.trim()) e.content = '请输入活动介绍'
   if (!form.value.location.trim()) e.location = '请输入活动地点'

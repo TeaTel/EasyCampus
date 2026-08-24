@@ -131,7 +131,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { activityApi } from '../services/api'
@@ -181,7 +181,7 @@ async function loadActivity() {
   loading.value = true
   error.value = null
   try {
-    const res = await activityApi.getActivityDetail(route.params.id)
+    const res = await activityApi.getActivityDetail(String(route.params.id))
     if (res.code === 200) {
       activity.value = res.data
     } else {

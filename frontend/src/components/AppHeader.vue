@@ -4,7 +4,7 @@
       <div class="header-left">
         <div class="user-area">
           <template v-if="isAuthenticated">
-            <button class="user-avatar-link" @click="$emit('toggle-sidebar')" title="打开菜单">
+            <button class="user-avatar-link" @click="toggleSidebar" title="打开菜单">
               <img
                 v-if="userAvatar && !avatarLoadError"
                 :src="userAvatar"
@@ -86,18 +86,21 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useNotificationStore } from '../store/notification'
 
-defineEmits(['toggle-sidebar'])
+const emit = defineEmits(['toggleSidebar'])
+function toggleSidebar() {
+  emit('toggleSidebar')
+}
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
-const notificationStore = useNotificationStore()
+const { isAuthenticated, currentUser } = useAuthStore()
+const { hasUnread } = useNotificationStore()
 
 const headerTabs = [
   { key: 'following', label: '关注' },
@@ -116,14 +119,7 @@ const searchExpanded = ref(false)
 const searchInput = ref(null)
 const avatarLoadError = ref(false)
 
-const isAuthenticated = computed(() => authStore.isAuthenticated.value)
-
-const hasUnread = computed(() => notificationStore.hasUnread.value)
-
-const userAvatar = computed(() => {
-  const user = authStore.currentUser.value
-  return user?.avatar || ''
-})
+const userAvatar = computed(() => currentUser.value?.avatar || '')
 
 const activeTab = computed(() => {
   if (route.path === '/') {

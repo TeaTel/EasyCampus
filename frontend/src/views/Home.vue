@@ -123,7 +123,7 @@
           </div>
         </div>
         <p class="error-text">{{ error }}</p>
-        <button @click="loadFeed" class="retry-btn">
+        <button @click="loadFeed()" class="retry-btn">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           点击重试
         </button>
@@ -211,7 +211,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -224,7 +224,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const activeTab = ref(route.query.tab || 'discover')
+const activeTab = ref<string>((route.query.tab as string) || 'discover')
 
 const adBanners = ref([])
 const banners = computed(() => {
@@ -314,7 +314,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (scrollHandler) {
-    window.removeEventListener('scroll', scrollHandler, { passive: true })
+    window.removeEventListener('scroll', scrollHandler)
     scrollHandler = null
   }
   stopBannerAutoplay()
@@ -536,7 +536,7 @@ function retryLoadMore() {
 
 watch(() => route.query.tab, (newTab) => {
   if (newTab && newTab !== activeTab.value) {
-    activeTab.value = newTab
+    activeTab.value = String(newTab)
     currentPage.value = 1
     hasMore.value = true
     feedItems.value = []

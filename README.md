@@ -9,9 +9,10 @@
 ### 技术栈
 
 - **框架**: Vue 3 (Composition API + `<script setup>`)
+- **语言**: TypeScript
 - **路由**: Vue Router 4 (History 模式)
-- **构建**: Vite 5
-- **状态管理**: Pinia (auth store)
+- **构建**: Vite 5（`vue-tsc` 类型检查）
+- **状态管理**: 组合式 Store（`useAuthStore` / `useNotificationStore`）
 - **HTTP**: Axios
 - **实时通信**: WebSocket (聊天)
 
@@ -20,19 +21,22 @@
 ```
 frontend/src/
 ├── App.vue                    # 根组件
-├── main.js                    # 入口文件
+├── main.ts                    # 入口文件
+├── vite-env.d.ts              # Vite/全局类型声明
 ├── assets/css/
 │   └── design-system.css      # 全局设计系统样式
-├── components/                # 可复用组件 (12个)
-├── views/                     # 页面视图 (33个)
+├── components/                # 可复用组件 (14个)
+├── views/                     # 页面视图 (35个)
 ├── router/
-│   └── index.js               # 路由配置
+│   └── index.ts               # 路由配置
 ├── services/
-│   └── api.js                 # API 服务层 + WebSocket
+│   └── api.ts                 # API 服务层 + WebSocket
 ├── store/
-│   └── auth.js                # 认证状态管理
+│   ├── auth.ts                # 认证状态管理
+│   └── notification.ts        # 通知/未读数状态管理
 └── use/
-    └── useToast.js            # Toast 组合式函数
+    ├── useToast.ts            # Toast 组合式函数
+    └── usePullRefresh.ts      # 下拉刷新组合式函数
 ```
 
 ---
@@ -56,8 +60,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/Home.vue`
 - 组件: `PostCard.vue`, `ProductCard.vue`
-- API: `feedApi` (services/api.js)
-- Store: `auth.js`
+- API: `feedApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/activities/:id` (点击活动卡片)
@@ -81,7 +85,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Products.vue`
-- API: `productApi` (services/api.js)
+- API: `productApi` (services/api.ts)
 
 **导航出口**:
 - → `/products/:id` (点击商品卡片)
@@ -102,7 +106,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Categories.vue`
-- API: `categoryApi`, `productApi` (services/api.js)
+- API: `categoryApi`, `productApi` (services/api.ts)
 
 **导航出口**:
 - → `/products?categoryId=xxx` (选择分类后)
@@ -124,7 +128,7 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/CommunityPage.vue`
 - 组件: `PostCard.vue`
-- API: `feedApi`, `postApi` (services/api.js)
+- API: `feedApi`, `postApi` (services/api.ts)
 
 **导航出口**:
 - → `/community/posts/:id` (点击帖子)
@@ -147,7 +151,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Messages.vue`
-- API: `messageApi` (services/api.js)
+- API: `messageApi` (services/api.ts)
 
 **导航出口**:
 - → `/chat/:userId?productId=xxx` (打开聊天)
@@ -170,9 +174,9 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/Profile.vue`
 - 组件: `PublishActionSheet.vue`
-- API: `productApi`, `postApi`, `favoriteApi`, `uploadApi`, `userApi` (services/api.js)
-- Store: `auth.js`
-- Composable: `useToast.js`
+- API: `productApi`, `postApi`, `favoriteApi`, `uploadApi`, `userApi` (services/api.ts)
+- Store: `auth.ts`
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/my-products` (商品与帖子)
@@ -197,7 +201,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/BoardsDiscoverPage.vue`
-- API: `categoryApi` (services/api.js)
+- API: `categoryApi` (services/api.ts)
 
 **导航出口**:
 - → `/boards/:id` (点击圈子)
@@ -219,7 +223,7 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/Activities.vue`
 - 组件: `ActivityCard.vue`
-- API: `activityApi` (services/api.js)
+- API: `activityApi` (services/api.ts)
 
 **导航出口**:
 - → `/activities/:id` (点击活动卡片)
@@ -241,8 +245,8 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Login.vue`
-- API: `userApi` (services/api.js)
-- Store: `auth.js`
+- API: `userApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/register` (点击注册链接)
@@ -264,7 +268,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Register.vue`
-- Store: `auth.js`
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/login?registered=true&username=xxx` (注册成功)
@@ -284,7 +288,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/ForgotPassword.vue`
-- API: `userApi` (services/api.js)
+- API: `userApi` (services/api.ts)
 
 **导航出口**:
 - → `/login` (返回登录/重置成功)
@@ -307,8 +311,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/ProductDetail.vue`
 - 组件: `LikeButton.vue`, `CommentSection.vue`
-- API: `productApi`, `followApi`, `favoriteApi` (services/api.js)
-- Store: `auth.js`
+- API: `productApi`, `followApi`, `favoriteApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/users/:sellerId` (查看卖家主页)
@@ -331,8 +335,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/CreateProduct.vue`
 - 组件: `TagInput.vue`, `ImageUploader.vue`
-- API: `productApi`, `categoryApi` (services/api.js)
-- Store: `auth.js`
+- API: `productApi`, `categoryApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/products` (发布成功)
@@ -356,8 +360,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/PostDetailPage.vue`
 - 组件: `LikeButton.vue`, `CommentSection.vue`
-- API: `postApi`, `followApi`, `favoriteApi` (services/api.js)
-- Store: `auth.js`
+- API: `postApi`, `followApi`, `favoriteApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/users/:userId` (点击作者头像/用户名)
@@ -378,8 +382,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/PostCreatePage.vue`
 - 组件: `TagInput.vue`, `ImageUploader.vue`
-- API: `postApi` (services/api.js)
-- Store: `auth.js`
+- API: `postApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/community/posts/:id` (发布成功)
@@ -401,10 +405,10 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/ChatRoom.vue`
-- API: `messageApi`, `productApi`, `userApi` (services/api.js)
-- Store: `auth.js`
-- Composable: `useToast.js`
-- WebSocket: `wsManager` (services/api.js)
+- API: `messageApi`, `productApi`, `userApi` (services/api.ts)
+- Store: `auth.ts`
+- Composable: `useToast.ts`
+- WebSocket: `wsManager` (services/api.ts)
 
 **导航出口**:
 - → 返回上一页
@@ -428,8 +432,8 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/UserProfilePage.vue`
 - 组件: `PostCard.vue`
-- API: `userApi`, `postApi`, `followApi` (services/api.js)
-- Store: `auth.js`
+- API: `userApi`, `postApi`, `followApi` (services/api.ts)
+- Store: `auth.ts`
 
 **导航出口**:
 - → `/profile` (编辑资料)
@@ -439,7 +443,28 @@ frontend/src/
 
 ---
 
-### 18. 商品与帖子管理页
+### 18. 关注列表页
+
+| 属性 | 值 |
+|------|-----|
+| **路由** | `/follows` |
+| **路由名** | `FollowList` |
+| **是否需登录** | 是 |
+| **显示TabBar** | 否 |
+
+**功能描述**: 关注/粉丝列表页，双 Tab 切换（关注/粉丝），展示用户列表（头像/昵称/用户名/简介/学校），支持关注/取关、加载更多、统计关注与粉丝数量。
+
+**关联文件**:
+- 页面: `frontend/src/views/FollowList.vue`
+- API: `followApi`, `userApi` (services/api.ts)
+- Store: `auth.ts`
+
+**导航出口**:
+- → `/users/:id` (点击用户主页)
+
+---
+
+### 19. 商品与帖子管理页
 
 | 属性 | 值 |
 |------|-----|
@@ -452,9 +477,9 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/MyProducts.vue`
-- API: `productApi`, `postApi` (services/api.js)
-- Store: `auth.js`
-- Composable: `useToast.js`
+- API: `productApi`, `postApi` (services/api.ts)
+- Store: `auth.ts`
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/products/:id` (商品详情)
@@ -464,7 +489,7 @@ frontend/src/
 
 ---
 
-### 19. 我的收藏页
+### 20. 我的收藏页
 
 | 属性 | 值 |
 |------|-----|
@@ -477,7 +502,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Favorites.vue`
-- API: `favoriteApi` (services/api.js)
+- API: `favoriteApi` (services/api.ts)
 
 **导航出口**:
 - → `/products/:id` (商品详情)
@@ -485,7 +510,7 @@ frontend/src/
 
 ---
 
-### 20. 我的活动页
+### 21. 我的活动页
 
 | 属性 | 值 |
 |------|-----|
@@ -498,16 +523,42 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/MyActivities.vue`
-- API: `activityApi` (services/api.js)
-- Store: `auth.js`
-- Composable: `useToast.js`
+- API: `activityApi` (services/api.ts)
+- Store: `auth.ts`
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/activities/:id` (查看活动详情)
 
 ---
 
-### 21. 设置页
+### 22. 通知页
+
+| 属性 | 值 |
+|------|-----|
+| **路由** | `/notifications` |
+| **路由名** | `Notifications` |
+| **是否需登录** | 是 |
+| **显示TabBar** | 否 |
+
+**功能描述**: 通知中心，按类型筛选（全部/点赞/评论/关注/私信），展示通知列表（操作者/内容/时间/未读标记），支持全部已读、清空、点击跳转对应内容。
+
+**关联文件**:
+- 页面: `frontend/src/views/NotificationsPage.vue`
+- 组件: `BackButton.vue`
+- API: `notificationApi` (services/api.ts)
+- Store: `notification.ts`
+- Composable: `useToast.ts`
+
+**导航出口**:
+- → `/chat/:userId` (私信通知)
+- → `/users/:id` (关注通知)
+- → `/community/posts/:id` (帖子互动)
+- → `/products/:id` (商品互动)
+
+---
+
+### 23. 设置页
 
 | 属性 | 值 |
 |------|-----|
@@ -521,12 +572,12 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/Settings.vue`
 - 组件: `NavBar.vue`
-- Store: `auth.js`
-- Composable: `useToast.js`
+- Store: `auth.ts`
+- Composable: `useToast.ts`
 
 ---
 
-### 22. 收货地址页
+### 24. 收货地址页
 
 | 属性 | 值 |
 |------|-----|
@@ -539,29 +590,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/Address.vue`
-- Composable: `useToast.js`
-
-**导航出口**:
-- → 返回上一页
-
----
-
-### 23. 校区设置页
-
-| 属性 | 值 |
-|------|-----|
-| **路由** | `/campus` |
-| **路由名** | `Campus` |
-| **是否需登录** | 是 |
-| **显示TabBar** | 否 |
-
-**功能描述**: 校区设置页，选择学校（韩山师范学院）和校区（南三区/南二区/南一区/中区/东区/西区），保存到用户资料。
-
-**关联文件**:
-- 页面: `frontend/src/views/CampusPage.vue`
-- API: `userApi` (services/api.js)
-- Store: `auth.js`
-- Composable: `useToast.js`
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → 返回上一页
@@ -570,7 +599,7 @@ frontend/src/
 
 ## 七、活动相关页面
 
-### 24. 活动详情页
+### 25. 活动详情页
 
 | 属性 | 值 |
 |------|-----|
@@ -584,7 +613,7 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/ActivityDetail.vue`
 - 组件: `LikeButton.vue`, `CommentSection.vue`
-- API: `activityApi` (services/api.js)
+- API: `activityApi` (services/api.ts)
 
 **导航出口**:
 - → `/users/:userId` (点击组织者)
@@ -593,7 +622,7 @@ frontend/src/
 
 ## 八、组织相关页面
 
-### 25. 创建组织页
+### 26. 创建组织页
 
 | 属性 | 值 |
 |------|-----|
@@ -606,15 +635,15 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/CreateOrgPage.vue`
-- API: `organizationApi` (services/api.js)
-- Composable: `useToast.js`
+- API: `organizationApi` (services/api.ts)
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/orgs/my` (创建成功)
 
 ---
 
-### 26. 我的组织页
+### 27. 我的组织页
 
 | 属性 | 值 |
 |------|-----|
@@ -627,8 +656,8 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/MyOrgsPage.vue`
-- API: `organizationApi` (services/api.js)
-- Composable: `useToast.js`
+- API: `organizationApi` (services/api.ts)
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/orgs/create` (创建组织)
@@ -637,7 +666,7 @@ frontend/src/
 
 ---
 
-### 27. 发现组织页
+### 28. 发现组织页
 
 | 属性 | 值 |
 |------|-----|
@@ -650,15 +679,37 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/OrgDiscoverPage.vue`
-- API: `organizationApi` (services/api.js)
-- Composable: `useToast.js`
+- API: `organizationApi` (services/api.ts)
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → `/orgs/:id` (查看组织详情)
 
 ---
 
-### 28. 组织详情页
+### 29. 我的邀请页
+
+| 属性 | 值 |
+|------|-----|
+| **路由** | `/orgs/invitations` |
+| **路由名** | `Invitations` |
+| **是否需登录** | 是 |
+| **显示TabBar** | 否 |
+
+**功能描述**: 组织邀请管理页，展示收到的组织邀请（组织名/邀请码/状态/发送时间），支持接受/拒绝邀请。
+
+**关联文件**:
+- 页面: `frontend/src/views/InvitationsPage.vue`
+- API: `organizationApi` (services/api.ts)
+- Composable: `useToast.ts`
+
+**导航出口**:
+- → `/orgs/discover` (空状态发现组织)
+- → 返回上一页
+
+---
+
+### 30. 组织详情页
 
 | 属性 | 值 |
 |------|-----|
@@ -671,8 +722,8 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/OrgDetailPage.vue`
-- API: `organizationApi` (services/api.js)
-- Composable: `useToast.js`
+- API: `organizationApi` (services/api.ts)
+- Composable: `useToast.ts`
 
 **导航出口**:
 - → 返回上一页
@@ -681,7 +732,7 @@ frontend/src/
 
 ## 九、其他页面
 
-### 29. 搜索页
+### 31. 搜索页
 
 | 属性 | 值 |
 |------|-----|
@@ -694,7 +745,7 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/SearchPage.vue`
-- API: `searchApi` (services/api.js)
+- API: `searchApi` (services/api.ts)
 
 **导航出口**:
 - → `/users/:userId` (点击用户)
@@ -704,7 +755,7 @@ frontend/src/
 
 ---
 
-### 30. 圈子详情页
+### 32. 圈子详情页
 
 | 属性 | 值 |
 |------|-----|
@@ -717,14 +768,14 @@ frontend/src/
 
 **关联文件**:
 - 页面: `frontend/src/views/BoardPage.vue`
-- API: `categoryApi` (services/api.js)
+- API: `categoryApi` (services/api.ts)
 
 **导航出口**:
 - → 返回上一页
 
 ---
 
-### 31. 广告编辑页
+### 33. 广告编辑页
 
 | 属性 | 值 |
 |------|-----|
@@ -738,14 +789,14 @@ frontend/src/
 **关联文件**:
 - 页面: `frontend/src/views/AdEditPage.vue`
 - 组件: `TagInput.vue`, `ImageUploader.vue`
-- API: `adApi` (services/api.js)
+- API: `adApi` (services/api.ts)
 
 **导航出口**:
 - → `/community/posts/:id` (支付成功)
 
 ---
 
-### 32. 404 页面
+### 34. 404 页面
 
 | 属性 | 值 |
 |------|-----|
@@ -766,7 +817,7 @@ frontend/src/
 
 ---
 
-### 33. 数据库测试页
+### 35. 数据库测试页
 
 | 属性 | 值 |
 |------|-----|
@@ -801,6 +852,8 @@ frontend/src/
 | ActivityCard | `components/ActivityCard.vue` | 活动卡片组件，展示封面/标题/组织者/时间/地点/状态 | Activities.vue |
 | PublishActionSheet | `components/PublishActionSheet.vue` | 发布类型选择底部弹窗（发布帖子/发布交易） | NavBar.vue, SideMenu.vue, Profile.vue |
 | ToastProvider | `components/ToastProvider.vue` | Toast 提示和确认弹窗提供者，全局注入 | App.vue |
+| BackButton | `components/BackButton.vue` | 返回按钮，支持历史记录返回，无历史时回退到 fallback 路径 | ActivityDetail.vue, ChatRoom.vue, PostDetailPage.vue, ProductDetail.vue, NotificationsPage.vue |
+| ImageViewer | `components/ImageViewer.vue` | 全屏图片查看器，支持左右滑动/箭头/键盘切换 | PostDetailPage.vue, ProductDetail.vue |
 
 ---
 
@@ -808,11 +861,11 @@ frontend/src/
 
 | 模块名 | 文件路径 | 功能描述 |
 |--------|---------|---------|
-| auth store | `store/auth.js` | 认证状态管理，token/user 响应式状态，login/register/logout 方法，localStorage 持久化 |
-| api service | `services/api.js` | API 服务层，含 axios 实例配置、JWT 拦截、WebSocket 管理器、16 个 API 模块 |
-| useToast | `use/useToast.js` | Toast 组合式函数，通过 inject 获取全局 showToast/showConfirm 方法 |
+| auth store | `store/auth.ts` | 认证状态管理，token/user 响应式状态，login/register/logout 方法，localStorage 持久化 |
+| api service | `services/api.ts` | API 服务层，含 axios 实例配置、JWT 拦截、WebSocket 管理器、16 个 API 模块 |
+| useToast | `use/useToast.ts` | Toast 组合式函数，通过 inject 获取全局 showToast/showConfirm 方法 |
 | design-system | `assets/css/design-system.css` | 全局设计系统样式变量和基础样式 |
-| router | `router/index.js` | 路由配置，含 33 个路由、全局守卫、白名单、认证检查 |
+| router | `router/index.ts` | 路由配置，含 35 个路由、全局守卫、白名单、认证检查 |
 
 ---
 
