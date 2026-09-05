@@ -304,12 +304,13 @@ async function uploadSingleImage(img, idx) {
 }
 
 // 分片上传（并发上传多个分片，加快大文件上传速度）
+// 大文件 >5MB 走分片：把文件切成 2MB 的块，3 路并发上传，全部完成后通知后端合并
 async function uploadWithChunks(file, onProgress) {
   const fileId = generateFileId()
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
   let completedChunks = 0
 
-  // 构建所有分片任务
+  // 预先把所有分片切好（File.slice 是惰性的，不立即占内存，仅记录偏移）
   const tasks = []
   for (let i = 0; i < totalChunks; i++) {
     const start = i * CHUNK_SIZE
@@ -318,7 +319,9 @@ async function uploadWithChunks(file, onProgress) {
     tasks.push({ chunk, index: i })
   }
 
-  // 带并发控制的分片上传
+  // 并发控制：用 Set 当「在途任务池」，size 即当前并发数
+  // 思路：每起一个任务就 add 进集合；达到并发上限就 await Promise.race 等任意一个结束；
+  // 任务完成时在 finally 里 delete 掉自己，腾出名额给下一个。比手写计数器更稳健。
   const executing = new Set()
   for (const task of tasks) {
     const promise = (async () => {
@@ -332,18 +335,19 @@ async function uploadWithChunks(file, onProgress) {
     })()
 
     executing.add(promise)
+    // finally 保证无论成功/失败都从池中移除，避免池子只增不减
     promise.finally(() => executing.delete(promise))
 
-    // 达到并发上限时，等待任一任务完成后再继续
+    // 达到并发上限时，等待任一任务完成后再继续投递下一个
     if (executing.size >= CHUNK_CONCURRENCY) {
       await Promise.race(executing)
     }
   }
 
-  // 等待剩余任务全部完成
+  // 等待剩余任务全部完成（含 race 之后还留在池里的）
   await Promise.all(executing)
 
-  // 合并分片
+  // 全部分片上传完成后，请求后端合并分片并返回最终 URL
   const mergeRes = await uploadApi.mergeChunks(fileId, file.name, totalChunks)
   if (mergeRes.code === 200 && mergeRes.data && mergeRes.data.url) {
     return mergeRes.data.url

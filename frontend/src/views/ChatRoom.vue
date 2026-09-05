@@ -99,7 +99,8 @@ const toast = useToast()
 
 /** 移动端虚拟键盘适配：键盘弹出时将输入区域固定在键盘上方 */
 function setupKeyboardAdapter() {
-  // 仅移动端生效
+  // 仅移动端生效。window.visualViewport 会随键盘弹出而缩小，是判断键盘的关键 API。
+  // 传统做法监听 resize 不可靠：iOS Safari 的 layout viewport 不会随键盘变化。
   if (!window.visualViewport || window.innerWidth > 768) return null
 
   const viewportHandler = () => {
@@ -108,7 +109,8 @@ function setupKeyboardAdapter() {
     if (!inputArea) return
 
     if (vv.height < window.innerHeight * 0.85) {
-      // 键盘弹出：将输入区域固定在可视区域底部（键盘上方）
+      // 键盘弹出：visualViewport 高度明显小于窗口高度（85% 为经验阈值）
+      // 把输入区 position:fixed 到「窗口底部 - 可视高度 - 偏移」= 键盘正上方
       inputArea.style.position = 'fixed'
       inputArea.style.bottom = (window.innerHeight - vv.height - vv.offsetTop) + 'px'
       inputArea.style.left = '0'
@@ -127,6 +129,7 @@ function setupKeyboardAdapter() {
   window.visualViewport.addEventListener('resize', viewportHandler)
   window.visualViewport.addEventListener('scroll', viewportHandler)
 
+  // 返回清理函数，供 onUnmounted 调用，避免组件销毁后仍修改 DOM
   return () => {
     window.visualViewport.removeEventListener('resize', viewportHandler)
     window.visualViewport.removeEventListener('scroll', viewportHandler)
@@ -186,10 +189,13 @@ let messagePollTimer = null
 
 onMounted(async () => {
   await initChat()
+  // 订阅全局 WS 的 chat_message 事件：服务端推送新消息时回调 handleWsMessage
+  // 必须在 onUnmounted 里 off 掉，否则离开聊天页后仍会收到推送造成内存泄漏/重复处理
   wsManager.on('chat_message', handleWsMessage)
   nextTick(() => inputRef.value?.focus())
   document.addEventListener('click', handleDocumentClick)
-  // 轮询刷新消息（每5秒，仅在页面可见时）
+  // 轮询刷新消息（每5秒）。WS 是主通道，轮询是「兜底」补偿丢包/未连上的情况。
+  // document.visibilityState === 'visible'：页面切到后台时跳过轮询，省电省流量
   messagePollTimer = setInterval(() => {
     if (document.visibilityState === 'visible' && conversationId.value) {
       loadMessages()
@@ -213,6 +219,8 @@ onUnmounted(() => {
   }
 })
 
+// 进入聊天页的初始化串行流程：取对方信息 → 找会话 → 取商品信息 → 拉历史 → 标已读
+// 串行是因为后一步依赖前一步的结果（如 loadMessages 需要 conversationId）
 async function initChat() {
   const rawId = route.params.userId
   const otherUserId = Number(rawId)
@@ -235,6 +243,8 @@ async function loadContactInfo(userId) {
     if (res.code === 200) {
       contactInfo.value = res.data
       if (res.data.lastActiveAt) {
+        // 在线判断：最近 5 分钟内有活跃即视为在线
+        // 这是一种「伪在线」近似，真正的在线状态需要心跳/WS 在线列表支撑
         const lastActive = new Date(res.data.lastActiveAt)
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
         isOnline.value = lastActive > fiveMinutesAgo
@@ -290,7 +300,9 @@ async function sendMessage() {
   if (!rawId || isNaN(otherUserId) || otherUserId <= 0) return
   sending.value = true
 
-  // 乐观更新：立即显示消息，标记为 sending
+  // 乐观更新（Optimistic Update）：不等服务器确认就先把消息显示在界面上，
+  // 并用临时 id + _status:'sending' 标记「发送中」。这样用户感知「秒回」。
+  // 失败时把 _status 改为 'failed' 并提供重试，避免消息凭空消失。
   const tempId = Date.now()
   const optimisticMsg = {
     id: tempId,
@@ -354,11 +366,16 @@ async function retryMessage(message) {
   }
 }
 
+// 处理服务端通过 WS 推送过来的新消息
+// 关键是「过滤」：全局 wsManager 的事件是所有聊天页共用的，
+// 必须只接收「当前对话对方发给我的」消息，否则会在 A 聊天页收到 B 的消息
 function handleWsMessage(data) {
   const rawId = route.params.userId
   const otherUserId = Number(rawId)
   if (!rawId || isNaN(otherUserId)) return
+  // 跳过自己发的消息（服务端可能回显），避免重复显示
   if (Number(data.senderId) === currentUserId.value) return
+  // 只处理「对方发的 且 我是接收者」的消息，过滤掉其他会话的推送
   if (Number(data.senderId) !== otherUserId && Number(data.receiverId) !== currentUserId.value) return
   messages.value.push({
     id: data.id || Date.now(),

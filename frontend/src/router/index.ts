@@ -1,14 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 通过「模块扩展（declaration merging）」给 vue-router 的 RouteMeta 增加自定义字段。
+// 这样在每个路由的 meta 里写 title/requiresAuth/... 时会有 TS 类型提示与校验。
 declare module 'vue-router' {
   interface RouteMeta {
-    title?: string
-    requiresAuth?: boolean
-    showTabBar?: boolean
-    transition?: string
+    title?: string       // 页面标题，守卫里拼成 document.title
+    requiresAuth?: boolean // 是否需要登录
+    showTabBar?: boolean  // 是否显示顶部 AppHeader（主 tab 页为 true）
+    transition?: string   // 页面切换动画名（'slide' 为详情页左右滑入）
   }
 }
 
+// 所有路由的 component 都写成 () => import(...) 动态导入，
+// 这样 Vite 会把它们拆成独立 chunk 按需加载（路由懒加载），显著减小首屏体积。
 const routes = [
   {
     path: '/',
@@ -259,8 +263,13 @@ const routes = [
 ]
 
 const router = createRouter({
+  // createWebHistory 用 HTML5 history API，URL 没有 # 号，更干净；
+  // 代价是部署时服务器必须把所有路由都回退到 index.html（见 nginx/vercel 配置）
   history: createWebHistory(),
   routes,
+  // scrollBehavior 控制路由切换时的滚动位置：
+  // - 浏览器前进/后退（savedPosition 有值）时恢复到上次离开的位置
+  // - 普通跳转则回到顶部
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -270,12 +279,13 @@ const router = createRouter({
   }
 })
 
-// 白名单路径（无需登录即可访问）
+// 白名单路径（无需登录即可访问）。注意：带 :id 的动态路径用 :param 写法，
+// 下面的匹配逻辑会把它转成正则来匹配实际请求路径
 const publicPaths = ['/', '/login', '/register', '/forgot-password', '/db-test', '/products', '/products/:id', '/categories',
   '/community', '/community/posts/:id', '/boards', '/boards/:id', '/users/:id', '/activities', '/activities/:id', '/profile', '/search',
   '/orgs/discover', '/orgs/:id']
 
-// 全局前置守卫
+// 全局前置守卫：每次路由跳转前都会执行，是做鉴权与页面标题统一设置的入口
 router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title
@@ -283,6 +293,7 @@ router.beforeEach((to, from, next) => {
     : '易校EasyCampus'
 
   // 检查当前路径是否在白名单中
+  // 动态路径（含 :param）无法直接全等比较，故用正则：把 :id 替换为 [^/]+ 后整段匹配
   const isPublicPath = publicPaths.some(path => {
     if (path.includes(':')) {
       const regex = new RegExp('^' + path.replace(/:\w+/g, '[^/]+') + '$')
@@ -295,7 +306,7 @@ router.beforeEach((to, from, next) => {
   if (isPublicPath) {
     const token = localStorage.getItem('token')
 
-    // 已登录用户访问登录/注册页，重定向到首页
+    // 已登录用户访问登录/注册页，重定向到首页（避免重复登录）
     if ((to.path === '/login' || to.path === '/register') && token && isValidToken(token)) {
       return next({ path: '/' })
     }
@@ -308,10 +319,12 @@ router.beforeEach((to, from, next) => {
   if (!token || !isValidToken(token)) {
     // 无效token或未登录
     if (token && !isValidToken(token)) {
+      // 存了但无效的 token 顺手清理，避免后续每次都走「无效」分支
       localStorage.removeItem('token')
       localStorage.removeItem('user')
     }
 
+    // 未登录跳登录页，并把目标地址带上 redirect 参数，登录成功后能跳回原页面
     return next({
       path: '/login',
       query: { redirect: to.fullPath }
@@ -322,6 +335,8 @@ router.beforeEach((to, from, next) => {
 })
 
 // 验证token有效性的辅助函数
+// 注意这里只做「前端格式校验」，真正的有效性由后端校验 JWT；
+// 前端这层主要用于：① 拦截演示模式假 token ② 避免明显无效 token 触发请求
 function isValidToken(token: string | null): boolean {
   if (!token) return false
 

@@ -4,7 +4,7 @@ spring:
     url: jdbc:mysql://localhost:3306/campus_market_dev?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true&rewriteBatchedStatements=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: '123456'
+    password: '@Shy20050125'
     hikari:
       maximum-pool-size: 10
       minimum-idle: 3
@@ -39,12 +39,29 @@ spring:
     lazy-initialization: false
 
   # 开发环境允许跨域
+  # 说明：本地开发时前端通过 Vite dev server（3000 端口）访问页面，
+  #       axios 发送 API 请求有两种情况：
+  #       ① 电脑本机浏览器打开 http://localhost:3000  →  Origin = http://localhost:3000
+  #       ② 同一 WiFi 下手机打开 http://192.168.2.3:3000  →  Origin = http://192.168.2.3:3000
+  #       如果以后路由器分配的 IP 变了（比如 192.168.2.3 → 192.168.2.12），
+  #       只要把这里的 192.168.2.3 改成新的 IP 即可；或者改为使用下面的
+  #       `allowed-origin-patterns` + "http://192.168.*:[*]" 通配写法就不用每次改。
   web:
     cors:
-      allowed-origins: "http://localhost:3000"
-      allowed-methods: "*"
-      allowed-headers: "*"
-      allow-credentials: true
+      allowed-origins:
+        - "http://localhost:3000"         # 本机通过 localhost 访问前端
+        - "http://127.0.0.1:3000"         # 本机通过 127.0.0.1 访问前端（兼容 IPv4 回环直接写 IP 的场景）
+        - "http://192.168.2.3:3000"       # 同一 WiFi 下手机 / 其他电脑通过局域网 IP 访问前端
+      # allowed-origin-patterns 写法（上面三条满足时就不需要，留作备用示例）：
+      # allowed-origin-patterns:
+      #   - "http://localhost:[*]"
+      #   - "http://127.0.0.1:[*]"
+      #   - "http://192.168.*:[*]"
+      allowed-methods: "*"                  # 允许所有 HTTP 方法（GET/POST/PUT/DELETE/PATCH/OPTIONS）
+      allowed-headers: "*"                  # 允许浏览器带任意请求头，包括 JWT 用的 Authorization、Axios 的 Content-Type
+      allow-credentials: true               # 允许携带 Cookie / Authorization 头。
+                                            # 注意：开启 credentials 时，allowed-origins 不能写 "*"，
+                                            # 必须显式列出每条 origin，所以上面才是一条条枚举而不是 "*"。
 
 mybatis:
   mapper-locations: classpath:mappers/*.xml
